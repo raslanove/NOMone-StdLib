@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////
 
 #include <NSystemUtils.h>
+#include <NSystem.h>
 #include <NString.h>
 #include <NError.h>
 
@@ -16,10 +17,12 @@
 static int64_t currentTime=0;
 
 static void* nMalloc(int32_t size) {
+    NSystem_mallocCallsCount++;
     return malloc(size);
 }
 
 static void nFree(void* address) {
+    NSystem_freeCallsCount++;
     free(address);
 }
 

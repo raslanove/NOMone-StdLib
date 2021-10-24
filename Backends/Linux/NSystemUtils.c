@@ -17,16 +17,19 @@
 
 void NMain();
 
-void main() {
+int main() {
     NSystem.initialize(NMain);
     NSystem.terminate();
+    return 0;
 }
 
 static void* nMalloc(int32_t size) {
+    NSystem_mallocCallsCount++;
     return malloc(size);
 }
 
 static void nFree(void* address) {
+    NSystem_freeCallsCount++;
     free(address);
 }
 

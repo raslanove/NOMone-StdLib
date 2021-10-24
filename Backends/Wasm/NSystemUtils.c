@@ -10,17 +10,20 @@
 
 void NMain();
 
-void main() {
+int main() {
     NSystem.initialize(NMain);
     NSystem.terminate();
+    return 0;
 }
 
 static void* nMalloc(int32_t size) {
     // TODO: implement...
+    NSystemUtils.mallocCallsCount++;
     return 0;
 }
 
 static void nFree(void* address) {
+    NSystemUtils.freeCallsCount++;
     // TODO: implement...
 }
 

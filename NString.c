@@ -272,7 +272,7 @@ static struct NString* vAppend(struct NString* outString, const char* format, va
     // Parse the format string,
     int32_t index=0;
     char currentChar;
-    while (currentChar = format[index++]) {
+    while ((currentChar = format[index++])) {
 
         // Regular characters,
         if (currentChar!='%') {
@@ -292,7 +292,7 @@ static struct NString* vAppend(struct NString* outString, const char* format, va
 
                 int32_t stringIndex = 0;
                 char currentChar;
-                while (currentChar = sourceString[stringIndex++]) {
+                while ((currentChar = sourceString[stringIndex++])) {
                     NByteVector.pushBack(outVector, currentChar);
                 }
                 continue;
@@ -402,7 +402,7 @@ static struct NString* replace(const char* textToBeSearched, const char* textToB
 
     int32_t searchIndex=0;
     char currentChar;
-    while (currentChar = textToBeSearched[searchIndex]) {
+    while ((currentChar = textToBeSearched[searchIndex])) {
 
         // Attempt matching,
         int32_t matchIndex=0;
