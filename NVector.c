@@ -3,7 +3,7 @@
 
 #define NVECTOR_BOUNDARY_CHECK 1
 
-static struct NVector* create(int32_t initialCapacity, int32_t objectSize, struct NVector* outputVector) {
+static struct NVector* initialize(int32_t initialCapacity, int32_t objectSize, struct NVector* outputVector) {
 
     if (objectSize==0) return 0;
 
@@ -18,12 +18,12 @@ static struct NVector* create(int32_t initialCapacity, int32_t objectSize, struc
     return outputVector;
 }
 
-static struct NVector* createInHeap(int32_t initialCapacity, int32_t objectSize) {
+static struct NVector* create(int32_t initialCapacity, int32_t objectSize) {
 
     if (objectSize==0) return 0;
 
     struct NVector* vector = NSystemUtils.malloc(sizeof(struct NVector));;
-    return create(initialCapacity, objectSize, vector);
+    return initialize(initialCapacity, objectSize, vector);
 }
 
 static void destroy(struct NVector* vector) {
@@ -101,8 +101,8 @@ static int32_t size(struct NVector* vector) {
 }
 
 const struct NVector_Interface NVector = {
+    .initialize = initialize,
     .create = create,
-    .createInHeap = createInHeap,
     .destroy = destroy,
     .destroyAndFree = destroyAndFree,
     .emplaceBack = emplaceBack,

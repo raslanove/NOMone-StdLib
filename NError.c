@@ -6,7 +6,7 @@
 static struct NVector* errorsStack;
 
 static void initialize() {
-    errorsStack = NVector.createInHeap(0, sizeof(struct NError));
+    errorsStack = NVector.create(0, sizeof(struct NError));
 }
 
 static void terminate() {
@@ -90,7 +90,7 @@ static struct NVector* popErrors(int32_t stackPosition) {
     if (errorsCount <= 0) return 0;
 
     // Pop the errors and return them,
-    struct NVector* errors = NVector.createInHeap(errorsCount, sizeof(struct NError));
+    struct NVector* errors = NVector.create(errorsCount, sizeof(struct NError));
     for (int32_t i=0; i<errorsCount; i++) {
         NVector.emplaceBack(errors);
         NVector.popBack(errorsStack, NVector.get(errors, i));
