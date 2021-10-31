@@ -27,7 +27,7 @@ static struct NVector* create(int32_t initialCapacity, int32_t objectSize) {
 }
 
 static void destroy(struct NVector* vector) {
-    NSystemUtils.free(vector->objects);
+    if (vector->objects) NSystemUtils.free(vector->objects);
     NSystemUtils.memset(vector, 0, sizeof(struct NVector));
 }
 

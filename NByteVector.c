@@ -24,7 +24,7 @@ static struct NByteVector* createInHeap(int32_t initialCapacity) {
 }
 
 static void destroy(struct NByteVector* vector) {
-    NSystemUtils.free(vector->objects);
+    if (vector->objects) NSystemUtils.free(vector->objects);
     NSystemUtils.memset(vector, 0, sizeof(struct NByteVector));
 }
 
