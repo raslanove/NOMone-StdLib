@@ -36,6 +36,11 @@ static void destroyAndFree(struct NVector* vector) {
     NSystemUtils.free(vector);
 }
 
+static struct NVector* reset(struct NVector* vector) {
+    vector->objectsCount = 0;
+    return vector;
+}
+
 static boolean expand(struct NVector* vector) {
     if (vector->capacity == 0) {
         vector->objects = NSystemUtils.malloc(vector->objectSize);
@@ -105,6 +110,7 @@ const struct NVector_Interface NVector = {
     .create = create,
     .destroy = destroy,
     .destroyAndFree = destroyAndFree,
+    .reset = reset,
     .emplaceBack = emplaceBack,
     .pushBack = pushBack,
     .popBack = popBack,
