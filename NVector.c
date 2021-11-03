@@ -41,19 +41,33 @@ static struct NVector* reset(struct NVector* vector) {
     return vector;
 }
 
+static boolean grow(struct NVector* vector, int32_t newCapacity) {
+
+    if (newCapacity <= vector->capacity) return True;
+
+    int32_t newSizeBytes = newCapacity * vector->objectSize;
+    void *newArray = NSystemUtils.malloc(newSizeBytes);
+    if (!newArray) return False;
+
+    if (vector->objects) {
+        int32_t originalSizeBytes = vector->capacity * vector->objectSize;
+        NSystemUtils.memcpy(newArray, vector->objects, originalSizeBytes);
+        NSystemUtils.free(vector->objects);
+    }
+
+    vector->objects = newArray;
+    vector->capacity = newCapacity;
+
+    return True;
+}
+
 static boolean expand(struct NVector* vector) {
     if (vector->capacity == 0) {
         vector->objects = NSystemUtils.malloc(vector->objectSize);
         if (!vector->objects) return False;
         vector->capacity = 1;
     } else {
-        int32_t originalSizeBytes = vector->capacity * vector->objectSize;
-        void *newArray = NSystemUtils.malloc(originalSizeBytes << 1);
-        if (!newArray) return False;
-        NSystemUtils.memcpy(newArray, vector->objects, originalSizeBytes);
-        NSystemUtils.free(vector->objects);
-        vector->objects = newArray;
-        vector->capacity <<= 1;
+        grow(vector, vector->capacity<<1);
     }
     return True;
 }
@@ -105,15 +119,23 @@ static int32_t size(struct NVector* vector) {
     return vector->objectsCount;
 }
 
+static boolean resize(struct NVector* vector, int32_t newSize) {
+    if (newSize > vector->capacity && !grow(vector, newSize)) return False;
+    vector->objectsCount = newSize;
+    return True;
+}
+
 const struct NVector_Interface NVector = {
     .initialize = initialize,
     .create = create,
     .destroy = destroy,
     .destroyAndFree = destroyAndFree,
     .reset = reset,
+    .grow = grow,
     .emplaceBack = emplaceBack,
     .pushBack = pushBack,
     .popBack = popBack,
     .get = get,
-    .size = size
+    .size = size,
+    .resize = resize
 };

@@ -26,11 +26,13 @@ struct NVector_Interface {
     void (*destroy)(struct NVector* vector);
     void (*destroyAndFree)(struct NVector* vector);
     struct NVector* (*reset)(struct NVector* vector);
+    boolean (*grow)(struct NVector* vector, int32_t newCapacity);
     void* (*emplaceBack)(struct NVector* vector);  // New structure pointer if successful, 0 otherwise.
     boolean (*pushBack)(struct NVector* vector, const void *object);  // True if successful.
     boolean (*popBack)(struct NVector* vector, void *outputObject);   // True if successful.
     void* (*get)(struct NVector* vector, int32_t index);
     int32_t (*size)(struct NVector* vector);
+    boolean (*resize)(struct NVector* vector, int32_t newSize);
 };
 
 extern const struct NVector_Interface NVector;
