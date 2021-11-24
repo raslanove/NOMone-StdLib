@@ -8,10 +8,10 @@
 #include <NString.h>
 #include <NError.h>
 
-void NMain();
+void NMain(int argc, char *argv[]);
 
 int main() {
-    NSystem.initialize(NMain);
+    NSystem.initialize(NMain, 0, 0);
     NSystem.terminate();
     return 0;
 }

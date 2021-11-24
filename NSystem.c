@@ -2,8 +2,8 @@
 #include <NSystem.h>
 #include <NSystemUtils.h>
 
-static void initialize(void (*nMain)()) {
-    if (nMain) nMain();
+static void initialize(void (*nMain)(int argc, char *argv[]), int argc, char *argv[]) {
+    if (nMain) nMain(argc, argv);
 }
 
 static void terminate() {

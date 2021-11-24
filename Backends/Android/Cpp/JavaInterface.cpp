@@ -6,7 +6,7 @@ static const char packageName[] = NATIVES_CLASS;
 static JavaVM *currentJvm=0;
 static jclass interfaceClass;
 
-extern "C" void NMain();
+extern "C" void NMain(int argc, char *argv[]);
 
 class JniState {
     bool shouldDetachThread;
@@ -44,7 +44,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
     //env->RegisterNatives(clazz, sMethods, 1);
 
 #ifdef NMAIN
-    NSystem.initialize(NMain);
+    NSystem.initialize(NMain, 0, 0);
 #else
     NSystem.initialize(0);
 #endif

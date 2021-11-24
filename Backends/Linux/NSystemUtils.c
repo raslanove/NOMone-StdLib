@@ -15,10 +15,10 @@
 #include <time.h>
 #include <math.h>
 
-void NMain();
+void NMain(int argc, char *argv[]);
 
-int main() {
-    NSystem.initialize(NMain);
+int main(int argc, char *argv[]) {
+    NSystem.initialize(NMain, argc, argv);
     NSystem.terminate();
     return 0;
 }

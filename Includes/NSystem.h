@@ -9,7 +9,7 @@
 
 // To be used by backend life-cycle events only.
 struct NSystem_Interface {
-    void (*initialize)(void (*nMain)());  // Call once at the program beginning.
+    void (*initialize)(void (*nMain)(int argc, char *argv[]), int argc, char *argv[]);  // Call once at the program beginning.
     void (*terminate)();   // Call once at the program end.
 };
 
