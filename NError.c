@@ -32,7 +32,7 @@ static struct NError* vPushError(const char* tag, const char* errorMessageFormat
     // become invalid. Thus, we create the error instance AFTER the vAppend() call.
 
     // Create a new error in the stack,
-    struct NError* newError = (struct NError*) NVector.emplaceBack(errorsStack);
+    struct NError* newError = NVector.emplaceBack(errorsStack);
 
     // Copy the tag,
     int32_t charIndex=0;
@@ -92,8 +92,8 @@ static struct NVector* popErrors(int32_t stackPosition) {
     // Pop the errors and return them,
     struct NVector* errors = NVector.create(errorsCount, sizeof(struct NError));
     for (int32_t i=0; i<errorsCount; i++) {
-        NVector.emplaceBack(errors);
-        NVector.popBack(errorsStack, NVector.get(errors, i));
+        void* error = NVector.emplaceBack(errors);
+        NVector.popBack(errorsStack, error);
     }
 
     return errors;

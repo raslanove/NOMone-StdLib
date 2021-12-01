@@ -52,6 +52,13 @@ static char* copy(char* destination, const char* source) {
     return destination;
 }
 
+static char* clone(const char* source) {
+    int32_t length = strlen(source)+1;
+    char *newCopy = NSystemUtils.malloc(length);
+    NSystemUtils.memcpy(newCopy, source, length);
+    return newCopy;
+}
+
 static int32_t parseInteger(const char* string) {
     int32_t integerLength = strlen(string);
     if (integerLength > 11) {
@@ -105,5 +112,6 @@ const struct NCString_Interface NCString = {
     .startsWith = startsWith,
     .equals = equals,
     .copy = copy,
+    .clone = clone,
     .parseInteger = parseInteger
 };

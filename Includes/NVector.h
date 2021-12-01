@@ -21,7 +21,7 @@ struct NVector {
 };
 
 struct NVector_Interface {
-    struct NVector* (*initialize)(int32_t initialCapacity, int32_t objectSize, struct NVector* outputVector);
+    struct NVector* (*initialize)(struct NVector* outputVector, int32_t initialCapacity, int32_t objectSize);
     struct NVector* (*create)(int32_t initialCapacity, int32_t objectSize);
     void (*destroy)(struct NVector* vector);
     void (*destroyAndFree)(struct NVector* vector);

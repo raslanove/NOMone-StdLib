@@ -14,4 +14,3 @@ struct NSystem_Interface {
 };
 
 extern const struct NSystem_Interface NSystem;
-extern int64_t NSystem_mallocCallsCount, NSystem_freeCallsCount;

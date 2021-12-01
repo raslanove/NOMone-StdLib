@@ -14,15 +14,15 @@
 #include <android/log.h>
 #include <math.h>
 
-static int64_t currentTime=0;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Memory manipulation
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* nMalloc(int32_t size) {
-    NSystem_mallocCallsCount++;
     return malloc(size);
 }
 
 static void nFree(void* address) {
-    NSystem_freeCallsCount++;
     free(address);
 }
 
@@ -33,6 +33,10 @@ static void* nMemset(void* address, int value, int32_t length) {
 static void* nMemcpy(void* dest, const void* src, int32_t length) {
     return memcpy(dest, src, length);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Logging
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define LOG_IMPLEMENTATION(logLevel, color) \
     struct NString* formattedString = NString.create(""); \
@@ -53,6 +57,11 @@ void logI(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDR
 void logW(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDROID_LOG_WARN , NTCOLOR(WARNING)); }
 void logE(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDROID_LOG_ERROR, NTCOLOR(ERROR)); }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Misc
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int64_t currentTime=0;
 static void getTime(int64_t* outTimeSeconds, int64_t* outTimeNanos) {
     *outTimeSeconds = ++currentTime;
     *outTimeNanos = 0;
@@ -73,6 +82,10 @@ const struct NSystemUtils_Interface NSystemUtils = {
     .isNaN = isNaN,
     .isInf = isInf
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Terminal colors
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const struct NTerminalColor NTerminalColor = {
     .RESET = "\033[0m",

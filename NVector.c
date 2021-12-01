@@ -3,7 +3,7 @@
 
 #define NVECTOR_BOUNDARY_CHECK 1
 
-static struct NVector* initialize(int32_t initialCapacity, int32_t objectSize, struct NVector* outputVector) {
+static struct NVector* initialize(struct NVector* outputVector, int32_t initialCapacity, int32_t objectSize) {
 
     if (objectSize==0) return 0;
 
@@ -23,7 +23,7 @@ static struct NVector* create(int32_t initialCapacity, int32_t objectSize) {
     if (objectSize==0) return 0;
 
     struct NVector* vector = NSystemUtils.malloc(sizeof(struct NVector));;
-    return initialize(initialCapacity, objectSize, vector);
+    return initialize(vector, initialCapacity, objectSize);
 }
 
 static void destroy(struct NVector* vector) {

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <NTypes.h>
+#include <NMemoryProfiler.h>
 
 #ifndef VERBOSE
 #define VERBOSE 1
@@ -14,6 +15,12 @@ inline void dummyFunction() {}
 #define NLOGI(tag, format, ...) ((VERBOSE) ? NSystemUtils.logI(tag, format, ##__VA_ARGS__) : dummyFunction())
 #define NLOGW(tag, format, ...) ((VERBOSE) ? NSystemUtils.logW(tag, format, ##__VA_ARGS__) : dummyFunction())
 #define NLOGE(tag, format, ...) ((VERBOSE) ? NSystemUtils.logE(tag, format, ##__VA_ARGS__) : dummyFunction())
+
+#ifndef NPROFILE_MEMORY
+#define NPROFILE_MEMORY 1
+#endif
+#define NMALLOC(size   , id) ((NPROFILE_MEMORY) ? NMemoryProfiler_malloc(size   , id) : NSystemUtils.malloc(size   ))
+#define   NFREE(address, id) ((NPROFILE_MEMORY) ? NMemoryProfiler_free  (address, id) : NSystemUtils.free  (address))
 
 #define NTCOLOR(color) NTerminalColor.color
 

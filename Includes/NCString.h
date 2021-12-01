@@ -12,6 +12,7 @@ struct NCString_Interface {
     boolean (*startsWith)(const char* string, const char* value);
     boolean (*equals)(const char* string, const char* value);
     char* (*copy)(char* destination, const char* source); // Returns destination.
+    char* (*clone)(const char* source);
     int32_t (*parseInteger)(const char* string);
 };
 
