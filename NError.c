@@ -101,7 +101,7 @@ static struct NVector* popErrors(int32_t stackPosition) {
 
 static void destroyAndFreeErrors(struct NVector *errors) {
     NVector.destroy(errors);
-    NSystemUtils.free(errors);
+    NFREE(errors, "NError.destroyAndFreeErrors() errors");
 }
 
 static int32_t popDestroyAndFreeErrors(int32_t stackPosition) {

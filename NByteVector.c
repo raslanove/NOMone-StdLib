@@ -13,18 +13,18 @@ static struct NByteVector* create(int32_t initialCapacity,struct NByteVector* ou
     outputVector->capacity = initialCapacity;
     outputVector->size = 0;
 
-    if (initialCapacity > 0) outputVector->objects = NSystemUtils.malloc(initialCapacity);
+    if (initialCapacity > 0) outputVector->objects = NMALLOC(initialCapacity, "NByteVector.create() outputVector->objects");
 
     return outputVector;
 }
 
 static struct NByteVector* createInHeap(int32_t initialCapacity) {
-    struct NByteVector* vector = NSystemUtils.malloc(sizeof(struct NByteVector));;
+    struct NByteVector* vector = NMALLOC(sizeof(struct NByteVector), "NByteVector.createInHeap() vector");
     return create(initialCapacity, vector);
 }
 
 static void destroy(struct NByteVector* vector) {
-    if (vector->objects) NSystemUtils.free(vector->objects);
+    if (vector->objects) NFREE(vector->objects, "NByteVector.destroy() vector->objects");
     NSystemUtils.memset(vector, 0, sizeof(struct NByteVector));
 }
 
@@ -35,15 +35,15 @@ static struct NByteVector* clear(struct NByteVector* vector) {
 
 static boolean expand(struct NByteVector* vector) {
     if (vector->capacity == 0) {
-        vector->objects = NSystemUtils.malloc(4);    // It's a waste to allocate less than 1 word, this also makes
-                                        // sure we can push 32bits at a time.
+        vector->objects = NMALLOC(4, "NByteVector.expand() vector->objects");    // It's a waste to allocate less than 1 word, this also makes
+                                                                                 // sure we can push 32bits at a time.
         if (!vector->objects) return False;
         vector->capacity = 4;
     } else {
-        void *newArray = NSystemUtils.malloc(vector->capacity << 1);
+        void *newArray = NMALLOC(vector->capacity << 1, "NByteVector.expand() newArray");
         if (!newArray) return False;
         NSystemUtils.memcpy(newArray, vector->objects, vector->capacity);
-        NSystemUtils.free(vector->objects);
+        NFREE(vector->objects, "NByteVector.expand() vector->objects");
         vector->objects = newArray;
         vector->capacity <<= 1;
     }

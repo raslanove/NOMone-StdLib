@@ -14,9 +14,13 @@ static void compactAllocationsVector();
 static boolean profilingEnabled=True;
 static int64_t mallocCallsCount=0, freeCallsCount=0;
 static int64_t allocatedBlocksCount=0;
+static int64_t currentlyUsedMemory=0;
+static int64_t maxUsedMemory=0;
+
 struct AllocationData {
     char* id;
     void* pointer;
+    int32_t size;
 };
 static struct NVector allocationDatas;
 
@@ -35,19 +39,24 @@ void* NMemoryProfiler_malloc(int32_t size, const char* id) {
         return 0;
     }
 
-    // Turn off profiling,
+    // Don't proceed if profiling is disabled,
     if (!profilingEnabled) return pointer;
+
+    // Turn off profiling,
     profilingEnabled = False;
 
     // Add allocation data,
     struct AllocationData* allocationData = NVector.emplaceBack(&allocationDatas);
-    allocationData->pointer = pointer;
-
-    // Id,
     allocationData->id = NCString.clone(id);
+    allocationData->pointer = pointer;
+    allocationData->size = size;
 
     allocatedBlocksCount++;
     mallocCallsCount++;
+    currentlyUsedMemory += size;
+    if (currentlyUsedMemory > maxUsedMemory) maxUsedMemory = currentlyUsedMemory;
+
+    // Re-enable profiling,
     profilingEnabled = True;
 
     return pointer;
@@ -70,43 +79,60 @@ void NMemoryProfiler_free(void* address, const char* id) {
     }
 
     // If not found,
-    if (!allocationData) {
+    if (!allocationData || (allocationData->pointer!=address)) {
         NLOGE("NMemoryProfiler", "free failed, attempted freeing an unallocated block. Id: %s%s%s", NTCOLOR(HIGHLIGHT), id, NTCOLOR(STREAM_DEFAULT));
         return ;
     }
 
     // Free the block,
     NSystemUtils.free(address);
-    allocationData->pointer = 0;
     allocatedBlocksCount--;
-
-    // Compact allocation data if needed,
-    if (NVector.size(&allocationDatas)-allocatedBlocksCount >= COMPACTION_THRESHOLD) compactAllocationsVector();
+    currentlyUsedMemory -= allocationData->size;
 
     freeCallsCount++;
+
+    #if NPROFILE_MEMORY==1
+        // Default mode, track memory leaks,
+        allocationData->pointer = 0;
+        NSystemUtils.free(allocationData->id);
+
+        // Compact allocation data if needed,
+        if (NVector.size(&allocationDatas)-allocatedBlocksCount >= COMPACTION_THRESHOLD) compactAllocationsVector();
+    #elif NPROFILE_MEMORY==2
+        // Track all allocations mode. Nothing needs to be done here.
+    #else
+        // An unsupported value,
+        #define STRINGIFY(x) #x
+        #define TOSTRING(x) STRINGIFY(x)
+        NLOGE("NMemoryProfiler", "NPROFILE_MEMORY supported values are 0, 1 and 2, Found " TOSTRING(NPROFILE_MEMORY));
+    #endif
 }
 
 static void compactAllocationsVector() {
 
     // TODO: eradicate the need for compaction...
 
-    NLOGE("sdf", "COMPACTING!");
+    profilingEnabled = False;
     int32_t vectorSize = NVector.size(&allocationDatas);
     int32_t destinationIndex=0;
     for (int32_t sourceIndex=0; sourceIndex<vectorSize; sourceIndex++) {
         struct AllocationData* source = NVector.get(&allocationDatas, sourceIndex);
-        if (source->pointer && (sourceIndex!=destinationIndex)) {
-            struct AllocationData* destination = NVector.get(&allocationDatas, destinationIndex);
-            *destination = *source;
+        if (source->pointer) {
+            if (sourceIndex!=destinationIndex) {
+                struct AllocationData* destination = NVector.get(&allocationDatas, destinationIndex);
+                *destination = *source;
+            }
             destinationIndex++;
         }
     }
     NVector.resize(&allocationDatas, allocatedBlocksCount);
+    profilingEnabled = True;
 }
 
 struct AllocationDataAggregation {
     char* id;
     int32_t count;
+    int64_t totalSize;
 };
 
 void NMemoryProfiler_logOnExitReport() {
@@ -129,6 +155,7 @@ void NMemoryProfiler_logOnExitReport() {
             struct AllocationDataAggregation *aggregation = NVector.get(&allocationDataAggregation, j);
             if (NCString.equals(aggregation->id, allocation->id)) {
                 aggregation->count++;
+                aggregation->totalSize += allocation->size;
                 found=True;
                 break;
             }
@@ -139,6 +166,7 @@ void NMemoryProfiler_logOnExitReport() {
             struct AllocationDataAggregation *aggregation = NVector.emplaceBack(&allocationDataAggregation);
             aggregation->id = NCString.clone(allocation->id);
             aggregation->count = 1;
+            aggregation->totalSize = allocation->size;
         }
     }
 
@@ -147,10 +175,13 @@ void NMemoryProfiler_logOnExitReport() {
 
     for (int32_t i=NVector.size(&allocationDataAggregation)-1; i>=0; i--) {
         struct AllocationDataAggregation *aggregation = NVector.get(&allocationDataAggregation, i);
-        NLOGE("NMemoryProfiler", "  ID: %s%s%s, Count: %s%d%s", NTCOLOR(HIGHLIGHT), aggregation->id, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->count, NTCOLOR(STREAM_DEFAULT));
+        NLOGE("NMemoryProfiler", "  ID: %s%s%s, Count: %s%d%s, TotalSize: %s%ld%s", NTCOLOR(HIGHLIGHT), aggregation->id, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->count, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->totalSize, NTCOLOR(STREAM_DEFAULT));
         NSystemUtils.free(aggregation->id);
     }
     NVector.destroy(&allocationDataAggregation);
+
+    NLOGE("NMemoryProfiler", "Total unfreed memory: %s%ld%s", NTCOLOR(HIGHLIGHT), currentlyUsedMemory, NTCOLOR(STREAM_DEFAULT));
+    NLOGE("NMemoryProfiler", "Maximum memory used at any instance: %s%ld%s", NTCOLOR(HIGHLIGHT), maxUsedMemory, NTCOLOR(STREAM_DEFAULT));
 
     profilingEnabled = True;
 }

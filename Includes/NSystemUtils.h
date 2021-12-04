@@ -8,19 +8,29 @@
 #include <NTypes.h>
 #include <NMemoryProfiler.h>
 
-#ifndef VERBOSE
-#define VERBOSE 1
+#ifndef NVERBOSE
+    #define NVERBOSE 1
 #endif
-inline void dummyFunction() {}
-#define NLOGI(tag, format, ...) ((VERBOSE) ? NSystemUtils.logI(tag, format, ##__VA_ARGS__) : dummyFunction())
-#define NLOGW(tag, format, ...) ((VERBOSE) ? NSystemUtils.logW(tag, format, ##__VA_ARGS__) : dummyFunction())
-#define NLOGE(tag, format, ...) ((VERBOSE) ? NSystemUtils.logE(tag, format, ##__VA_ARGS__) : dummyFunction())
+#if NVERBOSE==1
+    #define NLOGI(tag, format, ...) NSystemUtils.logI(tag, format, ##__VA_ARGS__)
+    #define NLOGW(tag, format, ...) NSystemUtils.logW(tag, format, ##__VA_ARGS__)
+    #define NLOGE(tag, format, ...) NSystemUtils.logE(tag, format, ##__VA_ARGS__)
+#else
+    #define NLOGI(tag, format, ...)
+    #define NLOGW(tag, format, ...)
+    #define NLOGE(tag, format, ...)
+#endif
 
 #ifndef NPROFILE_MEMORY
-#define NPROFILE_MEMORY 1
+    #define NPROFILE_MEMORY 1
 #endif
-#define NMALLOC(size   , id) ((NPROFILE_MEMORY) ? NMemoryProfiler_malloc(size   , id) : NSystemUtils.malloc(size   ))
-#define   NFREE(address, id) ((NPROFILE_MEMORY) ? NMemoryProfiler_free  (address, id) : NSystemUtils.free  (address))
+#if NPROFILE_MEMORY > 0
+    #define NMALLOC(size   , id) NMemoryProfiler_malloc(size   , id)
+    #define   NFREE(address, id) NMemoryProfiler_free  (address, id)
+#else
+    #define NMALLOC(size   , id) NSystemUtils.malloc(size   )
+    #define   NFREE(address, id) NSystemUtils.free  (address)
+#endif
 
 #define NTCOLOR(color) NTerminalColor.color
 

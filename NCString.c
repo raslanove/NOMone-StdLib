@@ -54,7 +54,7 @@ static char* copy(char* destination, const char* source) {
 
 static char* clone(const char* source) {
     int32_t length = strlen(source)+1;
-    char *newCopy = NSystemUtils.malloc(length);
+    char *newCopy = NMALLOC(length, "NCString.clone() newCopy");
     NSystemUtils.memcpy(newCopy, source, length);
     return newCopy;
 }

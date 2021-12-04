@@ -15,7 +15,7 @@ static void destroy(struct NString* string) {
 
 static void destroyAndFree(struct NString* string) {
     NByteVector.destroy(&(string->string));
-    NSystemUtils.free(string);
+    NFREE(string, "NString.destroyAndFree() string");
 }
 
 static inline int32_t positiveIntegerToDigits(char* outDigits, uint32_t integer) {
@@ -385,14 +385,14 @@ static const char* get(struct NString* string) {
 }
 
 static struct NString* create(const char* format, ...) {
-    struct NString* outString = NSystemUtils.malloc(sizeof(struct NString));
-    initialize(outString);
+    struct NString* newString = NMALLOC(sizeof(struct NString), "NString.create() newString");
+    initialize(newString);
 
     va_list vaList;
     va_start(vaList, format);
-    vAppend(outString, format, vaList);
+    vAppend(newString, format, vaList);
     va_end(vaList);
-    return outString;
+    return newString;
 }
 
 static struct NString* replace(const char* textToBeSearched, const char* textToBeRemoved, const char* textToBeInserted) {

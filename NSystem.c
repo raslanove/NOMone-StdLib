@@ -4,12 +4,16 @@
 #include <NMemoryProfiler.h>
 
 static void initialize(void (*nMain)(int argc, char *argv[]), int argc, char *argv[]) {
-    NMemoryProfiler_initialize();
+    #if NPROFILE_MEMORY > 0
+        NMemoryProfiler_initialize();
+    #endif
     if (nMain) nMain(argc, argv);
 }
 
 static void terminate() {
-    NMemoryProfiler_logOnExitReport();
+    #if NPROFILE_MEMORY > 0
+        NMemoryProfiler_logOnExitReport();
+    #endif
 }
 
 const struct NSystem_Interface NSystem = {

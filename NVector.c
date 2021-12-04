@@ -13,7 +13,7 @@ static struct NVector* initialize(struct NVector* outputVector, int32_t initialC
     outputVector->objectSize = objectSize;
     outputVector->objectsCount = 0;
 
-    if (initialCapacity > 0) outputVector->objects = NSystemUtils.malloc(initialCapacity * objectSize);
+    if (initialCapacity > 0) outputVector->objects = NMALLOC(initialCapacity * objectSize, "NVector.initialize() outputVector->objects");
 
     return outputVector;
 }
@@ -22,18 +22,18 @@ static struct NVector* create(int32_t initialCapacity, int32_t objectSize) {
 
     if (objectSize==0) return 0;
 
-    struct NVector* vector = NSystemUtils.malloc(sizeof(struct NVector));;
-    return initialize(vector, initialCapacity, objectSize);
+    struct NVector* newVector = NMALLOC(sizeof(struct NVector), "NVector.create() newVector");
+    return initialize(newVector, initialCapacity, objectSize);
 }
 
 static void destroy(struct NVector* vector) {
-    if (vector->objects) NSystemUtils.free(vector->objects);
+    if (vector->objects) NFREE(vector->objects, "NVector.destroy() vector->objects");
     NSystemUtils.memset(vector, 0, sizeof(struct NVector));
 }
 
 static void destroyAndFree(struct NVector* vector) {
     destroy(vector);
-    NSystemUtils.free(vector);
+    NFREE(vector, "NVector.destroyAndFree() vector");
 }
 
 static struct NVector* reset(struct NVector* vector) {
@@ -46,13 +46,13 @@ static boolean grow(struct NVector* vector, int32_t newCapacity) {
     if (newCapacity <= vector->capacity) return True;
 
     int32_t newSizeBytes = newCapacity * vector->objectSize;
-    void *newArray = NSystemUtils.malloc(newSizeBytes);
+    void *newArray = NMALLOC(newSizeBytes, "NVector.grow() newArray");
     if (!newArray) return False;
 
     if (vector->objects) {
         int32_t originalSizeBytes = vector->capacity * vector->objectSize;
         NSystemUtils.memcpy(newArray, vector->objects, originalSizeBytes);
-        NSystemUtils.free(vector->objects);
+        NFREE(vector->objects, "NVector.grow() vector->objects");
     }
 
     vector->objects = newArray;
@@ -63,7 +63,7 @@ static boolean grow(struct NVector* vector, int32_t newCapacity) {
 
 static boolean expand(struct NVector* vector) {
     if (vector->capacity == 0) {
-        vector->objects = NSystemUtils.malloc(vector->objectSize);
+        vector->objects = NMALLOC(vector->objectSize, "NVector.expand() vector->objects");
         if (!vector->objects) return False;
         vector->capacity = 1;
     } else {
