@@ -104,7 +104,8 @@ void NMemoryProfiler_free(void* address, const char* id) {
         // An unsupported value,
         #define STRINGIFY(x) #x
         #define TOSTRING(x) STRINGIFY(x)
-        NLOGE("NMemoryProfiler", "NPROFILE_MEMORY supported values are 0, 1 and 2, Found " TOSTRING(NPROFILE_MEMORY));
+        profilingEnabled = False;
+        NLOGE("NMemoryProfiler", "%sNPROFILE_MEMORY%s supported values are %s0%s, %s1%s and %s2%s, Found %s" TOSTRING(NPROFILE_MEMORY) "%s\n", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT));
     #endif
 }
 
