@@ -8,14 +8,16 @@
 #include <NSystemUtils.h>
 #include <NCString.h>
 
-#define COMPACTION_THRESHOLD 100
-static void compactAllocationsVector();
+#define EXPANSION_RATIO 0.75f   // Expansions takes place when the:
+                                //   (allocated blocks count) / (total space for allocations)
+                                // ratio is larger than this value.
 
 static boolean profilingEnabled=True;
 static int64_t mallocCallsCount=0, freeCallsCount=0;
 static int64_t allocatedBlocksCount=0;
 static int64_t currentlyUsedMemory=0;
 static int64_t maxUsedMemory=0;
+static uint32_t lastAllocationIndex;
 
 struct AllocationData {
     char* id;
@@ -24,16 +26,47 @@ struct AllocationData {
 };
 static struct NVector allocationDatas;
 
+struct BundledAllocationData {
+    uint32_t allocationIndex;
+};
+
 void NMemoryProfiler_initialize() {
-    NVector.initialize(&allocationDatas, 0, sizeof(struct AllocationData));
+    profilingEnabled = False;
+    NVector.initialize(&allocationDatas, 1, sizeof(struct AllocationData));
+    profilingEnabled = True;
+}
+
+//#include <stdio.h>
+//int32_t expand=0, sparse=0;
+static uint32_t getUnusedAllocationDataIndex() {
+
+    uint32_t allocationDatasSize = NVector.size(&allocationDatas);
+    if ((NPROFILE_MEMORY==2) ||
+        (allocationDatasSize < allocationDatas.capacity) ||                        // If the already allocated vector has space for more, or
+        (allocatedBlocksCount / (float) allocationDatasSize >= EXPANSION_RATIO)) { // if we've reached our expansion ratio, just expand.
+        //printf("Expand: %d, allocatedBlocksCount: %d, haveCapacity: %s\n", ++expand, allocatedBlocksCount, (allocationDatasSize < allocationDatas.capacity) ? "True" : "False");
+        NVector.emplaceBack(&allocationDatas);
+        return allocationDatasSize;
+    }
+
+    // Ratio not met, the vector is sparse enough. Look for empty records,
+    //int32_t iterationsCount=0;
+    do {
+        struct AllocationData* allocationData = NVector.get(&allocationDatas, lastAllocationIndex);
+        if (!allocationData->pointer) {
+            //printf("Sparse: %d, iterations: %d\n", ++sparse, iterationsCount);
+            return lastAllocationIndex;
+        }
+        //iterationsCount++;
+        lastAllocationIndex++;
+        if (lastAllocationIndex==allocationDatasSize) lastAllocationIndex = 0;
+    } while (True);
 }
 
 void* NMemoryProfiler_malloc(int32_t size, const char* id) {
 
-    // TODO: allocate extra 4 bytes for the allocation index...
-
     // Attempt allocating memory,
-    void* pointer = NSystemUtils.malloc(size);
+    void* pointer = NSystemUtils.malloc(size + (profilingEnabled ? sizeof(struct BundledAllocationData) : 0));
     if (!pointer) {
         NLOGE("NMemoryProfiler", "malloc failed. Id: %s%s%s", NTCOLOR(HIGHLIGHT), id, NTCOLOR(STREAM_DEFAULT));
         return 0;
@@ -46,11 +79,17 @@ void* NMemoryProfiler_malloc(int32_t size, const char* id) {
     profilingEnabled = False;
 
     // Add allocation data,
-    struct AllocationData* allocationData = NVector.emplaceBack(&allocationDatas);
+    uint32_t allocationIndex = getUnusedAllocationDataIndex();
+    struct AllocationData* allocationData = NVector.get(&allocationDatas, allocationIndex);
     allocationData->id = NCString.clone(id);
-    allocationData->pointer = pointer;
+    allocationData->pointer = pointer + sizeof(struct BundledAllocationData);
     allocationData->size = size;
 
+    // Set the bundled data,
+    struct BundledAllocationData* bundledData = pointer;
+    bundledData->allocationIndex = allocationIndex;
+
+    // Update status,
     allocatedBlocksCount++;
     mallocCallsCount++;
     currentlyUsedMemory += size;
@@ -59,24 +98,19 @@ void* NMemoryProfiler_malloc(int32_t size, const char* id) {
     // Re-enable profiling,
     profilingEnabled = True;
 
-    return pointer;
+    return allocationData->pointer;
 }
 
 void NMemoryProfiler_free(void* address, const char* id) {
-
-    // TODO: maintain an expanding circular array of indices...
 
     if (!profilingEnabled) {
         NSystemUtils.free(address);
         return;
     }
 
-    // Find the allocation data,
-    struct AllocationData* allocationData=0;
-    for (int32_t index=NVector.size(&allocationDatas)-1; index>=0; index--) {
-        allocationData = NVector.get(&allocationDatas, index);
-        if (address==allocationData->pointer) break;
-    }
+    // Get the allocation data,
+    struct BundledAllocationData* bundledData = address - sizeof(struct BundledAllocationData);
+    struct AllocationData* allocationData = NVector.get(&allocationDatas, bundledData->allocationIndex);
 
     // If not found,
     if (!allocationData || (allocationData->pointer!=address)) {
@@ -85,7 +119,7 @@ void NMemoryProfiler_free(void* address, const char* id) {
     }
 
     // Free the block,
-    NSystemUtils.free(address);
+    NSystemUtils.free(bundledData);
     allocatedBlocksCount--;
     currentlyUsedMemory -= allocationData->size;
 
@@ -95,9 +129,6 @@ void NMemoryProfiler_free(void* address, const char* id) {
         // Default mode, track memory leaks,
         allocationData->pointer = 0;
         NSystemUtils.free(allocationData->id);
-
-        // Compact allocation data if needed,
-        if (NVector.size(&allocationDatas)-allocatedBlocksCount >= COMPACTION_THRESHOLD) compactAllocationsVector();
     #elif NPROFILE_MEMORY==2
         // Track all allocations mode. Nothing needs to be done here.
     #else
@@ -107,27 +138,6 @@ void NMemoryProfiler_free(void* address, const char* id) {
         profilingEnabled = False;
         NLOGE("NMemoryProfiler", "%sNPROFILE_MEMORY%s supported values are %s0%s, %s1%s and %s2%s, Found %s" TOSTRING(NPROFILE_MEMORY) "%s\n", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT));
     #endif
-}
-
-static void compactAllocationsVector() {
-
-    // TODO: eradicate the need for compaction...
-
-    profilingEnabled = False;
-    int32_t vectorSize = NVector.size(&allocationDatas);
-    int32_t destinationIndex=0;
-    for (int32_t sourceIndex=0; sourceIndex<vectorSize; sourceIndex++) {
-        struct AllocationData* source = NVector.get(&allocationDatas, sourceIndex);
-        if (source->pointer) {
-            if (sourceIndex!=destinationIndex) {
-                struct AllocationData* destination = NVector.get(&allocationDatas, destinationIndex);
-                *destination = *source;
-            }
-            destinationIndex++;
-        }
-    }
-    NVector.resize(&allocationDatas, allocatedBlocksCount);
-    profilingEnabled = True;
 }
 
 struct AllocationDataAggregation {

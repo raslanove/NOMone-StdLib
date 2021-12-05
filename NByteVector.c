@@ -4,7 +4,7 @@
 
 #define NBYTEVECTOR_BOUNDARY_CHECK 1
 
-static struct NByteVector* create(int32_t initialCapacity,struct NByteVector* outputVector) {
+static struct NByteVector* create(uint32_t initialCapacity,struct NByteVector* outputVector) {
 
     NSystemUtils.memset(outputVector, 0, sizeof(struct NByteVector));
 
@@ -18,7 +18,7 @@ static struct NByteVector* create(int32_t initialCapacity,struct NByteVector* ou
     return outputVector;
 }
 
-static struct NByteVector* createInHeap(int32_t initialCapacity) {
+static struct NByteVector* createInHeap(uint32_t initialCapacity) {
     struct NByteVector* vector = NMALLOC(sizeof(struct NByteVector), "NByteVector.createInHeap() vector");
     return create(initialCapacity, vector);
 }
@@ -86,7 +86,7 @@ static boolean popBack32Bit(struct NByteVector* vector, int32_t *output) {
     return True;
 }
 
-static char get(struct NByteVector* vector, int32_t index) {
+static char get(struct NByteVector* vector, uint32_t index) {
 #if NBYTEVECTOR_BOUNDARY_CHECK
     if (index >= vector->size) {
         NERROR("NByteVector.get()", "Index out of bound: %d", index);
@@ -97,7 +97,7 @@ static char get(struct NByteVector* vector, int32_t index) {
     return vector->objects[index];
 }
 
-static boolean set(struct NByteVector* vector, int32_t index, char value) {
+static boolean set(struct NByteVector* vector, uint32_t index, char value) {
 #if NBYTEVECTOR_BOUNDARY_CHECK
     if (index >= vector->size) {
         NERROR("NByteVector.get()", "Index out of bound: %d", index);
@@ -109,7 +109,7 @@ static boolean set(struct NByteVector* vector, int32_t index, char value) {
     return True;
 }
 
-static int32_t size(struct NByteVector* vector) {
+static uint32_t size(struct NByteVector* vector) {
     return vector->size;
 }
 

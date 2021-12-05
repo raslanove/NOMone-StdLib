@@ -14,25 +14,25 @@
 
 struct NVector {
     // DON'T OVERWRITE. For use by the provided functions only.
-    int32_t capacity;
-    int32_t objectSize;
-    int32_t objectsCount;
+    uint32_t capacity;
+    uint32_t objectSize;
+    uint32_t objectsCount;
     void* objects;
 };
 
 struct NVector_Interface {
-    struct NVector* (*initialize)(struct NVector* outputVector, int32_t initialCapacity, int32_t objectSize);
-    struct NVector* (*create)(int32_t initialCapacity, int32_t objectSize);
+    struct NVector* (*initialize)(struct NVector* outputVector, uint32_t initialCapacity, uint32_t objectSize);
+    struct NVector* (*create)(uint32_t initialCapacity, uint32_t objectSize);
     void (*destroy)(struct NVector* vector);
     void (*destroyAndFree)(struct NVector* vector);
     struct NVector* (*reset)(struct NVector* vector);
-    boolean (*grow)(struct NVector* vector, int32_t newCapacity);
+    boolean (*grow)(struct NVector* vector, uint32_t newCapacity);
     void* (*emplaceBack)(struct NVector* vector);  // New structure pointer if successful, 0 otherwise.
     boolean (*pushBack)(struct NVector* vector, const void *object);  // True if successful.
     boolean (*popBack)(struct NVector* vector, void *outputObject);   // True if successful.
-    void* (*get)(struct NVector* vector, int32_t index);
-    int32_t (*size)(struct NVector* vector);
-    boolean (*resize)(struct NVector* vector, int32_t newSize);
+    void* (*get)(struct NVector* vector, uint32_t index);
+    uint32_t (*size)(struct NVector* vector);
+    boolean (*resize)(struct NVector* vector, uint32_t newSize);
 };
 
 extern const struct NVector_Interface NVector;

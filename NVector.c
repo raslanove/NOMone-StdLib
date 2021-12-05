@@ -3,7 +3,7 @@
 
 #define NVECTOR_BOUNDARY_CHECK 1
 
-static struct NVector* initialize(struct NVector* outputVector, int32_t initialCapacity, int32_t objectSize) {
+static struct NVector* initialize(struct NVector* outputVector, uint32_t initialCapacity, uint32_t objectSize) {
 
     if (objectSize==0) return 0;
 
@@ -18,7 +18,7 @@ static struct NVector* initialize(struct NVector* outputVector, int32_t initialC
     return outputVector;
 }
 
-static struct NVector* create(int32_t initialCapacity, int32_t objectSize) {
+static struct NVector* create(uint32_t initialCapacity, uint32_t objectSize) {
 
     if (objectSize==0) return 0;
 
@@ -41,16 +41,16 @@ static struct NVector* reset(struct NVector* vector) {
     return vector;
 }
 
-static boolean grow(struct NVector* vector, int32_t newCapacity) {
+static boolean grow(struct NVector* vector, uint32_t newCapacity) {
 
     if (newCapacity <= vector->capacity) return True;
 
-    int32_t newSizeBytes = newCapacity * vector->objectSize;
+    uint32_t newSizeBytes = newCapacity * vector->objectSize;
     void *newArray = NMALLOC(newSizeBytes, "NVector.grow() newArray");
     if (!newArray) return False;
 
     if (vector->objects) {
-        int32_t originalSizeBytes = vector->capacity * vector->objectSize;
+        uint32_t originalSizeBytes = vector->capacity * vector->objectSize;
         NSystemUtils.memcpy(newArray, vector->objects, originalSizeBytes);
         NFREE(vector->objects, "NVector.grow() vector->objects");
     }
@@ -107,7 +107,7 @@ static boolean popBack(struct NVector* vector, void *outputObject) {
     return True;
 }
 
-static void* get(struct NVector* vector, int32_t index) {
+static void* get(struct NVector* vector, uint32_t index) {
 #if NVECTOR_BOUNDARY_CHECK
     if (index >= vector->objectsCount) return 0;
 #endif
@@ -115,11 +115,11 @@ static void* get(struct NVector* vector, int32_t index) {
     return (void *)(((intptr_t) vector->objects) + (index * vector->objectSize));
 }
 
-static int32_t size(struct NVector* vector) {
+static uint32_t size(struct NVector* vector) {
     return vector->objectsCount;
 }
 
-static boolean resize(struct NVector* vector, int32_t newSize) {
+static boolean resize(struct NVector* vector, uint32_t newSize) {
     if (newSize > vector->capacity && !grow(vector, newSize)) return False;
     vector->objectsCount = newSize;
     return True;
