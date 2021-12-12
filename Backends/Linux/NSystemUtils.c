@@ -7,6 +7,8 @@
 #include <NSystem.h>
 #include <NString.h>
 #include <NError.h>
+#include <NVector.h>
+#include <NCString.h>
 
 #include <stdlib.h>
 #include <memory.h>
@@ -14,6 +16,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include "../../Includes/NSystemUtils.h"
 
 void NMain(int argc, char *argv[]);
 
@@ -79,6 +84,161 @@ static void nLogE(const char *tag, const char* format, ...) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// File system
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static boolean fileExists(const char* filePath, boolean isAsset) {
+    struct stat fileStatus;
+    return stat(filePath, &fileStatus) == 0;
+}
+
+// Returns file size if possible, -1 otherwise,
+static uint32_t getFileSize(const char* filePath, boolean isAsset) {
+    struct stat fileStatus;
+    if (stat(filePath, &fileStatus) != 0) {
+        NERROR("NSystemUtils.getFileSize()", "%sCouldn't get the size%s of %s%s%s. File %sdoesn't exist%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT));
+        return -1;
+    }
+    return (uint32_t) fileStatus.st_size;
+
+    // Could also use fseek (for cross compatibility),
+    //    FILE *file = fopen(filePath, "rb");
+    //    fseek(file, 0, SEEK_END);
+    //    long fileSize = ftell(file);
+    //    fseek(file, 0, SEEK_SET);  // Same as rewind(f).
+    //
+    //    char* code = NSystemUtils.malloc(fileSize + 1);
+    //    fread(code, 1, fileSize, file);
+    //    fclose(file);
+}
+
+static struct NVector* listDirectoryEntries(const char* directoryPath, boolean isAsset) {
+
+    // If you run into compatibility problems, see: https://stackoverflow.com/a/29094555/1942069
+
+    // Open directory,
+    DIR *directory = opendir(directoryPath);
+    if (!directory) {
+        NERROR("NSystemUtils.listDirectoryEntries()", "%sCouldn't list contents%s of directory %s%s%s.", NTCOLOR(HIGHLIGHT),NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), directoryPath, NTCOLOR(STREAM_DEFAULT));
+        return 0;
+    }
+
+    // Read contents,
+    struct NVector *directoryContents = NVector.create(0, sizeof(struct NDirectoryEntry));
+    struct dirent *directoryEntry;
+
+    while ((directoryEntry = readdir(directory)) != 0) {
+        struct NDirectoryEntry* currentDirectoryEntry = NVector.emplaceBack(directoryContents);
+        currentDirectoryEntry->name = NCString.clone(directoryEntry->d_name);
+
+        switch(directoryEntry->d_type) {
+            case DT_FIFO: currentDirectoryEntry->type = NDirectoryEntryType.NAMED_PIPE        ; break;
+            case DT_CHR : currentDirectoryEntry->type = NDirectoryEntryType.CHARACTER_DEVICE  ; break;
+            case DT_DIR : currentDirectoryEntry->type = NDirectoryEntryType.DIRECTORY         ; break;
+            case DT_BLK : currentDirectoryEntry->type = NDirectoryEntryType.BLOCK_DEVICE      ; break;
+            case DT_REG : currentDirectoryEntry->type = NDirectoryEntryType.REGULAR_FILE      ; break;
+            case DT_LNK : currentDirectoryEntry->type = NDirectoryEntryType.SYMBOLIC_LINK     ; break;
+            case DT_SOCK: currentDirectoryEntry->type = NDirectoryEntryType.UNIX_DOMAIN_SOCKET; break;
+            default     : currentDirectoryEntry->type = NDirectoryEntryType.UNKNOWN           ; break;
+        }
+    }
+
+    closedir(directory);
+    return directoryContents;
+}
+
+static void destroyAndFreeDirectoryEntryVector(struct NVector* directoryEntryVector) {
+    for (int32_t i=NVector.size(directoryEntryVector)-1; i>=0; i--) {
+        struct NDirectoryEntry* directoryEntry = NVector.get(directoryEntryVector, i);
+        NFREE((void *) directoryEntry->name, "NSystemUtils.destroyAndFreeDirectoryEntryVector() directoryEntry->name");
+    }
+    NVector.destroyAndFree(directoryEntryVector);
+}
+
+// Returns read bytes count, -1 otherwise,
+static uint32_t readFromFile(const char* filePath, boolean isAsset, uint32_t offsetInFile, uint32_t maxReadSize, void* output) {
+
+    struct stat fileStatus;
+    if (stat(filePath, &fileStatus) != 0) {
+        NERROR("NSystemUtils.readFromFile()", "Couldn't read file: %s%s%s. File %sdoesn't exist%s.", NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT));
+        return -1;
+    }
+
+    // Force upper limit of read size,
+    uint32_t readSize = fileStatus.st_size - offsetInFile;
+    if (maxReadSize && (readSize > maxReadSize)) readSize = maxReadSize;
+
+    // Open the file,
+    FILE *fileHandle = fopen(filePath, "rb");
+    if (!fileHandle) {
+        NERROR("NSystemUtils.readFromFile()", "%sCouldn't read%s file %s%s%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT));
+        return -1;
+    }
+
+    // Forward to the offset,
+    if (offsetInFile) {
+        if (fseek(fileHandle, offsetInFile, SEEK_SET)) {
+            NERROR("NSystemUtils.readFromFile()", "%sCouldn't seek%s to offset %s%ld%s in file %s%s%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), (int64_t) readSize, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT));
+            return -1;
+        }
+    }
+
+    // Read,
+    uint32_t readBytesCount = fread(output, 1, readSize, fileHandle);
+    fclose(fileHandle);
+
+    return readBytesCount;
+}
+
+// Returns success,
+static boolean writeToFile(const char* filePath, const void *data, uint32_t sizeBytes, boolean append) {
+
+    // Open file,
+    FILE *fileHandle;
+    if (append) {
+        fileHandle = fopen(filePath, "ab");
+        if (!fileHandle) {
+            NERROR("NSystemUtils.writeToFile()", "%sCouldn't open%s file for appending: %s%s%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT));
+            return False;
+        }
+    } else {
+        fileHandle = fopen(filePath, "wb");
+        if (!fileHandle) {
+            NERROR("NSystemUtils.writeToFile()", "%sCouldn't open%s file for writing: %s%s%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), filePath, NTCOLOR(STREAM_DEFAULT));
+            return False;
+        }
+    }
+
+    // Write data to the file,
+    uint32_t writtenBytesCount = fwrite(data, 1, sizeBytes, fileHandle);
+    fclose(fileHandle);
+
+    return writtenBytesCount;
+}
+
+// Returns success,
+static boolean makeDirectory(const char* directoryPath) {
+
+    if (mkdir(directoryPath, 0777)) {
+        NERROR("NSystemUtils.writeToFile()", "%sCouldn't make directory%s: %s%s%s.", NTCOLOR(HIGHLIGHT), NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), directoryPath, NTCOLOR(STREAM_DEFAULT));
+        return False;
+    }
+
+    return True;
+}
+
+const struct NDirectoryEntryType NDirectoryEntryType = {
+    .UNKNOWN = 0,
+    .REGULAR_FILE = 1,
+    .DIRECTORY = 2,
+    .BLOCK_DEVICE = 3,
+    .NAMED_PIPE = 4,
+    .UNIX_DOMAIN_SOCKET = 5,
+    .CHARACTER_DEVICE = 6,
+    .SYMBOLIC_LINK = 7
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -100,6 +260,13 @@ const struct NSystemUtils_Interface NSystemUtils = {
     .logI = nLogI,
     .logW = nLogW,
     .logE = nLogE,
+    .fileExists = fileExists,
+    .getFileSize = getFileSize,
+    .listDirectoryEntries = listDirectoryEntries,
+    .destroyAndFreeDirectoryEntryVector = destroyAndFreeDirectoryEntryVector,
+    .readFromFile = readFromFile,
+    .writeToFile = writeToFile,
+    .makeDirectory = makeDirectory,
     .getTime = getTime,
     .isNaN = isNaN,
     .isInf = isInf

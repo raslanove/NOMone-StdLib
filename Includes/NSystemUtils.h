@@ -34,20 +34,54 @@
 
 #define NTCOLOR(color) NTerminalColor.color
 
+struct NVector;
+
+struct NDirectoryEntry {
+    int32_t type;
+    const char* name;
+};
+
 struct NSystemUtils_Interface {
+
+    // Memory management,
     void* (*malloc)(int32_t size);
     void (*free)(void* address);
     void* (*memset)(void* address, int value, int32_t length); // Returns address.
     void* (*memcpy)(void* dest, const void* src, int32_t length); // Returns destination.
+
+    // Log,
     void (*logI)(const char* tag, const char* format, ...);
     void (*logW)(const char* tag, const char* format, ...);
     void (*logE)(const char* tag, const char* format, ...);
+
+    // File system,
+    boolean (*fileExists)(const char* filePath, boolean isAsset);
+    uint32_t (*getFileSize)(const char* filePath, boolean isAsset); // Returns file size if possible, -1 otherwise.
+    struct NVector* (*listDirectoryEntries)(const char* directoryPath, boolean isAsset);
+    void (*destroyAndFreeDirectoryEntryVector)(struct NVector* directoryEntryVector);
+    uint32_t (*readFromFile)(const char* filePath, boolean isAsset, uint32_t offsetInFile, uint32_t maxReadSize, void* output); // Returns read bytes count, -1 otherwise.
+    boolean (*writeToFile)(const char* filePath, const void *data, uint32_t sizeBytes, boolean append); // Returns success.
+    boolean (*makeDirectory)(const char* directoryPath); // Returns success.
+
+    // Misc,
     void (*getTime)(int64_t* outTimeSeconds, int64_t* outTimeNanos);
     boolean (*isNaN)(double value);
     boolean (*isInf)(double value);
 };
 
 extern const struct NSystemUtils_Interface NSystemUtils;
+
+struct NDirectoryEntryType {
+    const int32_t UNKNOWN;
+    const int32_t NAMED_PIPE;
+    const int32_t CHARACTER_DEVICE;
+    const int32_t DIRECTORY;
+    const int32_t BLOCK_DEVICE;
+    const int32_t REGULAR_FILE;
+    const int32_t SYMBOLIC_LINK;
+    const int32_t UNIX_DOMAIN_SOCKET;
+};
+extern const struct NDirectoryEntryType NDirectoryEntryType;
 
 struct NTerminalColor {
     // Thanks to this answer: https://stackoverflow.com/a/51944613/1942069
