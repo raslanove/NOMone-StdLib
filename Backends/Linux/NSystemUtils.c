@@ -52,7 +52,7 @@ static void* nMemcpy(void* dest, const void* src, int32_t length) {
 // Logging
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define LOG_DEFINITION(color) \
+#define LOG_DEFINITION(tagColor, streamDefaultColor) \
     struct NString* formattedString = NString.create(""); \
     va_list vaList; \
     va_start(vaList, format); \
@@ -61,35 +61,61 @@ static void* nMemcpy(void* dest, const void* src, int32_t length) {
     int32_t errorsCount = NError.observeErrors() - errorsStart; \
     va_end(vaList); \
     if (!errorsCount) { \
-        struct NString* coloredString = NString.replace(NString.get(formattedString), NTCOLOR(STREAM_DEFAULT), color); \
+        struct NString* coloredString = NString.replace(NString.get(formattedString), NTCOLOR(STREAM_DEFAULT), streamDefaultColor); \
         if (tag && tag[0]) { \
-            printf("%s%s: %s%s\n", color, tag, NString.get(coloredString), NTCOLOR(RESET)); \
+            printf("%s%s: %s%s%s\n", tagColor, tag, streamDefaultColor, NString.get(coloredString), NTCOLOR(RESET)); \
         } else { \
-            printf("%s%s%s\n", color, NString.get(coloredString), NTCOLOR(RESET)); \
+            printf("%s%s%s\n", streamDefaultColor, NString.get(coloredString), NTCOLOR(RESET)); \
         } \
         NString.destroyAndFree(coloredString); \
     } \
     NString.destroyAndFree(formattedString)
 
 static void nLogI(const char *tag, const char* format, ...) {
-    LOG_DEFINITION(NTCOLOR(RESET));
+    LOG_DEFINITION(NTCOLOR(STREAM_DEFAULT_STRONG), NTCOLOR(RESET));
 }
 
 static void nLogW(const char *tag, const char* format, ...) {
-    LOG_DEFINITION(NTCOLOR(WARNING));
+    LOG_DEFINITION(NTCOLOR(WARNING_STRONG), NTCOLOR(WARNING));
 }
 
 static void nLogE(const char *tag, const char* format, ...) {
-    LOG_DEFINITION(NTCOLOR(ERROR));
+    LOG_DEFINITION(NTCOLOR(ERROR_STRONG), NTCOLOR(ERROR));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // File system
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static boolean fileExists(const char* filePath, boolean isAsset) {
-    struct stat fileStatus;
-    return stat(filePath, &fileStatus) == 0;
+static boolean directoryEntryExists(const char* path, boolean isAsset) {
+    struct stat status;
+    return stat(path, &status) == 0;
+}
+
+static int32_t getDirectoryEntryType(const char* path, boolean isAsset) {
+    struct stat status;
+    if (stat(path, &status)) return -1;
+
+    if      (S_ISREG (status.st_mode)) { return NDirectoryEntryType.REGULAR_FILE      ; }
+    else if (S_ISDIR (status.st_mode)) { return NDirectoryEntryType.DIRECTORY         ; }
+    else if (S_ISBLK (status.st_mode)) { return NDirectoryEntryType.BLOCK_DEVICE      ; }
+    else if (S_ISFIFO(status.st_mode)) { return NDirectoryEntryType.NAMED_PIPE        ; }
+    else if (S_ISSOCK(status.st_mode)) { return NDirectoryEntryType.UNIX_DOMAIN_SOCKET; }
+    else if (S_ISCHR (status.st_mode)) { return NDirectoryEntryType.CHARACTER_DEVICE  ; }
+    else if (S_ISLNK (status.st_mode)) { return NDirectoryEntryType.SYMBOLIC_LINK     ; }
+    else                               { return NDirectoryEntryType.UNKNOWN           ; }
+}
+
+// Returns a pointer to full path. Remember to free it,
+static char* getFullPath(const char* path) {
+#if NPROFILE_MEMORY==0
+    return realpath(path, 0);
+#else
+    char* unprofiledPath = realpath(path, 0);
+    char* profiledPath = NCString.clone(unprofiledPath);
+    nFree(unprofiledPath);
+    return profiledPath;
+#endif
 }
 
 // Returns file size if possible, -1 otherwise,
@@ -260,7 +286,9 @@ const struct NSystemUtils_Interface NSystemUtils = {
     .logI = nLogI,
     .logW = nLogW,
     .logE = nLogE,
-    .fileExists = fileExists,
+    .directoryEntryExists = directoryEntryExists,
+    .getDirectoryEntryType = getDirectoryEntryType,
+    .getFullPath = getFullPath,
     .getFileSize = getFileSize,
     .listDirectoryEntries = listDirectoryEntries,
     .destroyAndFreeDirectoryEntryVector = destroyAndFreeDirectoryEntryVector,
@@ -343,8 +371,11 @@ const struct NTerminalColor NTerminalColor = {
     .WHITE_BACKGROUND_BRIGHT   = "\033[0;107m",
 
     .STREAM_DEFAULT = "\033NOMoneSD",
-    .ERROR = "\033[0;31m",
-    .WARNING = "\033[0;33m",
-    .HIGHLIGHT = "\033[1;93m",
-    .DANGER = "\033[1;91m"
+    .STREAM_DEFAULT_STRONG = "\033[1;97m", // WHITE_BOLD_BRIGHT
+    .ERROR = "\033[0;31m",                 // RED_BOLD
+    .ERROR_STRONG = "\033[1;91m",          // RED_BOLD_BRIGHT
+    .WARNING = "\033[0;33m",               // YELLOW
+    .WARNING_STRONG = "\033[1;93m",        // YELLOW_BOLD_BRIGHT
+    .HIGHLIGHT = "\033[1;93m",             // YELLOW_BOLD_BRIGHT
+    .DANGER = "\033[1;91m"                 // RED_BOLD_BRIGHT
 };

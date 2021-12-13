@@ -57,6 +57,24 @@ void logI(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDR
 void logW(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDROID_LOG_WARN , NTCOLOR(WARNING)); }
 void logE(const char *logTag, const char *format, ...) { LOG_IMPLEMENTATION(ANDROID_LOG_ERROR, NTCOLOR(ERROR)); }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// File system
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO:...
+
+const struct NDirectoryEntryType NDirectoryEntryType = {
+        .UNKNOWN = 0,
+        .REGULAR_FILE = 1,
+        .DIRECTORY = 2,
+        .BLOCK_DEVICE = 3,
+        .NAMED_PIPE = 4,
+        .UNIX_DOMAIN_SOCKET = 5,
+        .CHARACTER_DEVICE = 6,
+        .SYMBOLIC_LINK = 7
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,8 +172,11 @@ const struct NTerminalColor NTerminalColor = {
     .WHITE_BACKGROUND_BRIGHT   = "\033[0;107m",
 
     .STREAM_DEFAULT = "\033NOMoneSD",
-    .ERROR = "\033[0;96m",      // CYAN_BRIGHT
-    .WARNING = "\033[1;94m",    // BLUE_BOLD_BRIGHT
-    .HIGHLIGHT = "\033[0;34m",  // BLUE
-    .DANGER = "\033[1;96m"      // CYAN_BOLD_BRIGHT
+    .STREAM_DEFAULT_STRONG = "\033[1;30m", // BLACK_BOLD
+    .ERROR = "\033[0;96m",                 // CYAN_BRIGHT
+    .ERROR_STRONG = "\033[1;96m",          //CYAN_BOLD_BRIGHT
+    .WARNING = "\033[1;94m",               // BLUE_BOLD_BRIGHT
+    .WARNING_STRONG = "\033[1;94m",        // BLUE_BOLD_BRIGHT
+    .HIGHLIGHT = "\033[0;34m",             // BLUE
+    .DANGER = "\033[1;96m"                 // CYAN_BOLD_BRIGHT
 };

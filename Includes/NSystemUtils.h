@@ -38,7 +38,7 @@ struct NVector;
 
 struct NDirectoryEntry {
     int32_t type;
-    const char* name;
+    char* name;
 };
 
 struct NSystemUtils_Interface {
@@ -55,7 +55,9 @@ struct NSystemUtils_Interface {
     void (*logE)(const char* tag, const char* format, ...);
 
     // File system,
-    boolean (*fileExists)(const char* filePath, boolean isAsset);
+    boolean (*directoryEntryExists)(const char* path, boolean isAsset);
+    int32_t (*getDirectoryEntryType)(const char* path, boolean isAsset); // Returns type, -1 if not possible.
+    char* (*getFullPath)(const char* path); // Returns a pointer to full path. Remember to free it.
     uint32_t (*getFileSize)(const char* filePath, boolean isAsset); // Returns file size if possible, -1 otherwise.
     struct NVector* (*listDirectoryEntries)(const char* directoryPath, boolean isAsset);
     void (*destroyAndFreeDirectoryEntryVector)(struct NVector* directoryEntryVector);
@@ -161,8 +163,11 @@ struct NTerminalColor {
 
     // Symantec colors,
     const char* const STREAM_DEFAULT;
+    const char* const STREAM_DEFAULT_STRONG;
     const char* const ERROR;
+    const char* const ERROR_STRONG;
     const char* const WARNING;
+    const char* const WARNING_STRONG;
     const char* const HIGHLIGHT;
     const char* const DANGER;
 };

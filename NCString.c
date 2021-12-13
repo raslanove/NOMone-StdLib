@@ -3,7 +3,7 @@
 #include <NError.h>
 #include <NSystemUtils.h>
 
-static int32_t strlen(const char* string) {
+static int32_t stringLength(const char* string) {
     int32_t length=0;
     while (string[length]) length++;
     return length;
@@ -22,6 +22,27 @@ static boolean startsWith(const char* string, const char* value) {
 
     // Oh well, they must be equals then :D
     return True;
+}
+
+// Returns last occurrence index, -1 if not found,
+static int32_t lastIndexOf(const char* string, const char* value) {
+
+#ifdef EXTRA_CHECKS
+    if (!string || !value) {
+        NERROR("NCString", "lastIndexOf(): string and value should be non-zero");
+        return -1;
+    }
+#endif
+
+    int32_t  textLength = stringLength(string);
+    int32_t valueLength = stringLength( value);
+    textLength -= valueLength;
+    while (textLength >= 0) {
+        if (startsWith(&string[textLength], value)) return textLength;
+        textLength--;
+    }
+
+    return -1; // Not found.
 }
 
 static boolean equals(const char* string, const char* value) {
@@ -53,14 +74,14 @@ static char* copy(char* destination, const char* source) {
 }
 
 static char* clone(const char* source) {
-    int32_t length = strlen(source)+1;
+    int32_t length = stringLength(source)+1;
     char *newCopy = NMALLOC(length, "NCString.clone() newCopy");
     NSystemUtils.memcpy(newCopy, source, length);
     return newCopy;
 }
 
 static int32_t parseInteger(const char* string) {
-    int32_t integerLength = strlen(string);
+    int32_t integerLength = stringLength(string);
     if (integerLength > 11) {
         NERROR("NCString.parseInteger()", "Integer length can't exceed 10 digits and a sign. Found: %s%s", NTCOLOR(HIGHLIGHT), string);
         return 0;
@@ -108,8 +129,9 @@ static int32_t parseInteger(const char* string) {
 }
 
 const struct NCString_Interface NCString = {
-    .length = strlen,
+    .length = stringLength,
     .startsWith = startsWith,
+    .lastIndexOf = lastIndexOf,
     .equals = equals,
     .copy = copy,
     .clone = clone,
