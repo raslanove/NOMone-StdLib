@@ -3,6 +3,8 @@
 // Created by Omar El Sayyed on 26th of November 2021.
 //////////////////////////////////////////////////////
 
+// TODO: Find a way to track maximum size of simultaneous allocations of every allocation tag...
+
 #include <NMemoryProfiler.h>
 #include <NVector.h>
 #include <NSystemUtils.h>
