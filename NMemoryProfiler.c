@@ -3,6 +3,8 @@
 // Created by Omar El Sayyed on 26th of November 2021.
 //////////////////////////////////////////////////////
 
+#if NPROFILE_MEMORY != 3
+
 // TODO: Find a way to track maximum size of simultaneous allocations of every allocation tag...
 
 #include <NMemoryProfiler.h>
@@ -28,7 +30,7 @@ struct AllocationData {
 };
 static struct NVector allocationDatas;
 
-struct BundledAllocationData {
+struct AllocationBundledData {
     uint32_t allocationIndex;
 };
 
@@ -68,7 +70,7 @@ static uint32_t getUnusedAllocationDataIndex() {
 void* NMemoryProfiler_malloc(int32_t size, const char* id) {
 
     // Attempt allocating memory,
-    void* pointer = NSystemUtils.malloc(size + (profilingEnabled ? sizeof(struct BundledAllocationData) : 0));
+    void* pointer = NSystemUtils.malloc(size + (profilingEnabled ? sizeof(struct AllocationBundledData) : 0));
     if (!pointer) {
         NLOGE("NMemoryProfiler", "malloc failed. Id: %s%s%s", NTCOLOR(HIGHLIGHT), id, NTCOLOR(STREAM_DEFAULT));
         return 0;
@@ -84,11 +86,11 @@ void* NMemoryProfiler_malloc(int32_t size, const char* id) {
     uint32_t allocationIndex = getUnusedAllocationDataIndex();
     struct AllocationData* allocationData = NVector.get(&allocationDatas, allocationIndex);
     allocationData->id = NCString.clone(id);
-    allocationData->pointer = pointer + sizeof(struct BundledAllocationData);
+    allocationData->pointer = pointer + sizeof(struct AllocationBundledData);
     allocationData->size = size;
 
     // Set the bundled data,
-    struct BundledAllocationData* bundledData = pointer;
+    struct AllocationBundledData* bundledData = pointer;
     bundledData->allocationIndex = allocationIndex;
 
     // Update status,
@@ -111,7 +113,7 @@ void NMemoryProfiler_free(void* address, const char* id) {
     }
 
     // Get the allocation data,
-    struct BundledAllocationData* bundledData = address - sizeof(struct BundledAllocationData);
+    struct AllocationBundledData* bundledData = address - sizeof(struct AllocationBundledData);
     struct AllocationData* allocationData = NVector.get(&allocationDatas, bundledData->allocationIndex);
 
     // If not found,
@@ -128,11 +130,11 @@ void NMemoryProfiler_free(void* address, const char* id) {
     freeCallsCount++;
 
     #if NPROFILE_MEMORY==1
-        // Default mode, track memory leaks,
+        // Basic mode (default), track memory leaks,
         allocationData->pointer = 0;
         NSystemUtils.free(allocationData->id);
     #elif NPROFILE_MEMORY==2
-        // Track all allocations mode. Nothing needs to be done here.
+        // Track all allocations mode. Doesn't delete allocation tracking data, so nothing needs to be done here.
     #else
         // An unsupported value,
         #define STRINGIFY(x) #x
@@ -188,13 +190,14 @@ void NMemoryProfiler_logOnExitReport() {
 
     for (int32_t i=NVector.size(&allocationDataAggregation)-1; i>=0; i--) {
         struct AllocationDataAggregation *aggregation = NVector.get(&allocationDataAggregation, i);
-        NLOGE("NMemoryProfiler", "  ID: %s%s%s, Count: %s%d%s, TotalSize: %s%ld%s", NTCOLOR(HIGHLIGHT), aggregation->id, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->count, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->totalSize, NTCOLOR(STREAM_DEFAULT));
+        NLOGI("NMemoryProfiler", "  ID: %s%s%s, Count: %s%d%s, TotalSize: %s%ld%s", NTCOLOR(HIGHLIGHT), aggregation->id, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->count, NTCOLOR(STREAM_DEFAULT), NTCOLOR(HIGHLIGHT), aggregation->totalSize, NTCOLOR(STREAM_DEFAULT));
         NSystemUtils.free(aggregation->id);
     }
     NVector.destroy(&allocationDataAggregation);
+    NVector.destroy(&allocationDatas);
 
-    NLOGE("NMemoryProfiler", "Total unfreed memory: %s%ld%s", NTCOLOR(HIGHLIGHT), currentlyUsedMemory, NTCOLOR(STREAM_DEFAULT));
-    NLOGE("NMemoryProfiler", "Maximum memory used at any instance: %s%ld%s", NTCOLOR(HIGHLIGHT), maxUsedMemory, NTCOLOR(STREAM_DEFAULT));
-
-    profilingEnabled = True;
+    if (currentlyUsedMemory) NLOGE("NMemoryProfiler", "Total unfreed memory: %s%ld%s", NTCOLOR(HIGHLIGHT), currentlyUsedMemory, NTCOLOR(STREAM_DEFAULT));
+    NLOGI("NMemoryProfiler", "Maximum memory used at any instance: %s%ld%s", NTCOLOR(HIGHLIGHT), maxUsedMemory, NTCOLOR(STREAM_DEFAULT));
 }
+
+#endif

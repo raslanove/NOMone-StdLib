@@ -3,10 +3,20 @@
 #include <NError.h>
 #include <NSystemUtils.h>
 
-static struct NString* initialize(struct NString* outputString) {
-    NByteVector.create(4, &outputString->string);
-    NByteVector.pushBack(&outputString->string, 0);
-    return outputString;
+static struct NString* vAppend(struct NString* outString, const char* format, va_list vaList);
+
+static inline struct NString* vInitialize(struct NString* string, const char* format, va_list vaList) {
+    NByteVector.create(4, &string->string);
+    NByteVector.pushBack(&string->string, 0);
+    return vAppend(string, format, vaList);
+}
+
+static struct NString* initialize(struct NString* string, const char* format, ...) {
+    va_list vaList;
+    va_start(vaList, format);
+    vInitialize(string, format, vaList);
+    va_end(vaList);
+    return string;
 }
 
 static void destroy(struct NString* string) {
@@ -264,6 +274,8 @@ static void appendDoubleToByteVector(struct NByteVector *outVector, double doubl
 
 static struct NString* vAppend(struct NString* outString, const char* format, va_list vaList) {
 
+    if (!format) return outString;
+
     // Pop the termination zero,
     struct NByteVector *outVector = &outString->string;
     char tempChar;
@@ -386,11 +398,9 @@ static const char* get(struct NString* string) {
 
 static struct NString* create(const char* format, ...) {
     struct NString* newString = NMALLOC(sizeof(struct NString), "NString.create() newString");
-    initialize(newString);
-
     va_list vaList;
     va_start(vaList, format);
-    vAppend(newString, format, vaList);
+    vInitialize(newString, format, vaList);
     va_end(vaList);
     return newString;
 }

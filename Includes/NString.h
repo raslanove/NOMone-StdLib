@@ -13,7 +13,7 @@ struct NString {
 };
 
 struct NString_Interface {
-    struct NString* (*initialize)(struct NString* outputString);
+    struct NString* (*initialize)(struct NString* string, const char* format, ...);
     void (*destroy)(struct NString* string);
     void (*destroyAndFree)(struct NString* string);
 

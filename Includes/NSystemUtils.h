@@ -21,6 +21,14 @@
     #define NLOGE(tag, format, ...)
 #endif
 
+// NPROFILE_MEMORY values:
+//   0: None.
+//   1: Basic mode (default), track memory leaks.
+//   2: Doesn't delete allocation tracking data, so we can generate more data when the app finishes,
+//      but the app's memory usage grows steadily.
+//   3: Detailed info. Aggregation data always present. Not meant for detecting leaks and such. It's
+//      for analyzing app's memory usage performance.
+
 #ifndef NPROFILE_MEMORY
     #define NPROFILE_MEMORY 1
 #endif
