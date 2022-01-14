@@ -6,7 +6,7 @@
 static struct NString* vAppend(struct NString* outString, const char* format, va_list vaList);
 
 static inline struct NString* vInitialize(struct NString* string, const char* format, va_list vaList) {
-    NByteVector.create(4, &string->string);
+    NByteVector.initialize(&string->string, 4);
     NByteVector.pushBack(&string->string, 0);
     return vAppend(string, format, vaList);
 }
@@ -279,7 +279,7 @@ static struct NString* vAppend(struct NString* outString, const char* format, va
     // Pop the termination zero,
     struct NByteVector *outVector = &outString->string;
     char tempChar;
-    NByteVector.popBack(outVector, &tempChar);
+    NByteVector.popBack(outVector, (uint8_t*) &tempChar);
 
     // Parse the format string,
     int32_t index=0;
@@ -393,7 +393,7 @@ static struct NString* set(struct NString* outString, const char* format, ...) {
 }
 
 static const char* get(struct NString* string) {
-    return string->string.objects;
+    return (const char*) string->string.objects;
 }
 
 static struct NString* create(const char* format, ...) {

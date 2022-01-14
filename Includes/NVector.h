@@ -25,7 +25,7 @@ struct NVector_Interface {
     struct NVector* (*create)(uint32_t initialCapacity, uint32_t objectSize);
     void (*destroy)(struct NVector* vector);
     void (*destroyAndFree)(struct NVector* vector);
-    struct NVector* (*reset)(struct NVector* vector);
+    struct NVector* (*clear)(struct NVector* vector);
     boolean (*grow)(struct NVector* vector, uint32_t newCapacity);
     void* (*emplaceBack)(struct NVector* vector);  // New structure pointer if successful, 0 otherwise.
     boolean (*pushBack)(struct NVector* vector, const void *object);  // True if successful.

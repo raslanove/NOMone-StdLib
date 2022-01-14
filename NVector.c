@@ -36,7 +36,7 @@ static void destroyAndFree(struct NVector* vector) {
     NFREE(vector, "NVector.destroyAndFree() vector");
 }
 
-static struct NVector* reset(struct NVector* vector) {
+static struct NVector* clear(struct NVector* vector) {
     vector->objectsCount = 0;
     return vector;
 }
@@ -50,7 +50,7 @@ static boolean grow(struct NVector* vector, uint32_t newCapacity) {
     if (!newArray) return False;
 
     if (vector->objects) {
-        uint32_t originalSizeBytes = vector->capacity * vector->objectSize;
+        uint32_t originalSizeBytes = vector->objectsCount * vector->objectSize;
         NSystemUtils.memcpy(newArray, vector->objects, originalSizeBytes);
         NFREE(vector->objects, "NVector.grow() vector->objects");
     }
@@ -66,10 +66,9 @@ static boolean expand(struct NVector* vector) {
         vector->objects = NMALLOC(vector->objectSize, "NVector.expand() vector->objects");
         if (!vector->objects) return False;
         vector->capacity = 1;
-    } else {
-        grow(vector, vector->capacity<<1);
+        return True;
     }
-    return True;
+    return grow(vector, vector->capacity<<1);
 }
 
 static void* emplaceBack(struct NVector* vector) {
@@ -130,7 +129,7 @@ const struct NVector_Interface NVector = {
     .create = create,
     .destroy = destroy,
     .destroyAndFree = destroyAndFree,
-    .reset = reset,
+    .clear = clear,
     .grow = grow,
     .emplaceBack = emplaceBack,
     .pushBack = pushBack,
