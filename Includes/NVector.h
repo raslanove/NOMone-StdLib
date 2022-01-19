@@ -31,6 +31,7 @@ struct NVector_Interface {
     boolean (*pushBack)(struct NVector* vector, const void *object);  // True if successful.
     boolean (*popBack)(struct NVector* vector, void *outputObject);   // True if successful.
     void* (*get)(struct NVector* vector, uint32_t index);
+    void* (*getLast)(struct NVector* vector);
     uint32_t (*size)(struct NVector* vector);
     boolean (*resize)(struct NVector* vector, uint32_t newSize);
 };

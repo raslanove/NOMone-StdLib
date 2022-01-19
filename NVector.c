@@ -111,7 +111,15 @@ static void* get(struct NVector* vector, uint32_t index) {
     if (index >= vector->objectsCount) return 0;
 #endif
 
-    return (void *)(((intptr_t) vector->objects) + (index * vector->objectSize));
+    return (void *)(((intptr_t) vector->objects) + (index                    * vector->objectSize));
+}
+
+static void* getLast(struct NVector* vector) {
+#if NVECTOR_BOUNDARY_CHECK
+    if (!vector->objectsCount) return 0;
+#endif
+
+    return (void *)(((intptr_t) vector->objects) + ((vector->objectsCount-1) * vector->objectSize));
 }
 
 static uint32_t size(struct NVector* vector) {
@@ -135,6 +143,7 @@ const struct NVector_Interface NVector = {
     .pushBack = pushBack,
     .popBack = popBack,
     .get = get,
+    .getLast = getLast,
     .size = size,
     .resize = resize
 };

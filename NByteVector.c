@@ -91,6 +91,8 @@ static boolean pushBack32Bit(struct NByteVector* vector, int32_t value) {
     if ((vector->size + 4 > vector->capacity) && !expand(vector)) return False;
 
     // Push the value,
+    // Note: TYPE PUNNING, could result in unaligned memory access. Maybe we should use memcopy
+    //       or define out own routine? See: https://en.wikipedia.org/wiki/Type_punning#Use_of_pointers
     *((int32_t *) &vector->objects[vector->size]) = value;
     vector->size += 4;
     return True;
