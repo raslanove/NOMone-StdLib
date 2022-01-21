@@ -115,10 +115,7 @@ static void* get(struct NVector* vector, uint32_t index) {
 }
 
 static void* getLast(struct NVector* vector) {
-#if NVECTOR_BOUNDARY_CHECK
     if (!vector->objectsCount) return 0;
-#endif
-
     return (void *)(((intptr_t) vector->objects) + ((vector->objectsCount-1) * vector->objectSize));
 }
 
