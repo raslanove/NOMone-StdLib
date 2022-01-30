@@ -347,7 +347,7 @@ static struct NString* vAppend(struct NString* outString, const char* format, va
                 }
 
                 char digits[19];
-                int32_t digitsCount=positiveLongToDigits(digits, sourceLong);
+                int32_t digitsCount = positiveLongToDigits(digits, sourceLong);
 
                 // Push digits in reverse order,
                 while (digitsCount--) NByteVector.pushBack(outVector, digits[digitsCount]+48);

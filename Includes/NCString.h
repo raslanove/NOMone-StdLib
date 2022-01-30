@@ -15,6 +15,7 @@ struct NCString_Interface {
     char* (*copy)(char* destination, const char* source); // Returns destination.
     char* (*clone)(const char* source);
     int32_t (*parseInteger)(const char* string);
+    int64_t (*parse64BitInteger)(const char* string);
 };
 
 extern const struct NCString_Interface NCString;

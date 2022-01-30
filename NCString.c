@@ -81,6 +81,8 @@ static char* clone(const char* source) {
 }
 
 static int32_t parseInteger(const char* string) {
+
+    // Max: 2,147,483,647
     int32_t integerLength = stringLength(string);
     if (integerLength > 11) {
         NERROR("NCString.parseInteger()", "Integer length can't exceed 10 digits and a sign. Found: %s%s", NTCOLOR(HIGHLIGHT), string);
@@ -89,8 +91,8 @@ static int32_t parseInteger(const char* string) {
 
     // Parse,
     // Sign,
-    int32_t offset=0;
     int32_t currentDigitMagnitude = 1;
+    int32_t offset=0;
     if (string[0] == '-') {
         offset = 1;
         integerLength--;
@@ -111,7 +113,7 @@ static int32_t parseInteger(const char* string) {
         currentDigitMagnitude *= 10;
 
         // Check overflow,
-        if (offset) {
+        if (offset) { // Negative.
             if (lastValue < value) {
                 NERROR("NCString.parseInteger()", "Value too small to fit in a 32 bit integer: %s%s", NTCOLOR(HIGHLIGHT), string);
                 return 0;
@@ -128,6 +130,56 @@ static int32_t parseInteger(const char* string) {
     return value;
 }
 
+static int64_t parse64BitInteger(const char* string) {
+
+    // Max: 9,223,372,036,854,775,807
+    int32_t integerLength = stringLength(string);
+    if (integerLength > 20) {
+        NERROR("NCString.parse64BitInteger()", "64bit Integer length can't exceed 19 digits and a sign. Found: %s%s", NTCOLOR(HIGHLIGHT), string);
+        return 0;
+    }
+
+    // Parse,
+    // Sign,
+    int64_t currentDigitMagnitude = 1;
+    int32_t offset=0;
+    if (string[0] == '-') {
+        offset = 1;
+        integerLength--;
+        currentDigitMagnitude = -1;
+    }
+
+    // Value,
+    int64_t value=0;
+    int64_t lastValue=0;
+    char currentChar;
+    while (integerLength--) {
+        currentChar = string[offset + integerLength] - 48;
+        if ((currentChar<0) || (currentChar>9)) {
+            NERROR("NCString.parse64BitInteger()", "Only digits from 0 to 9 are allowed. Found: %s%s", NTCOLOR(HIGHLIGHT), string);
+            return 0;
+        }
+        value += currentDigitMagnitude * (int64_t) currentChar;
+        currentDigitMagnitude *= 10;
+
+        // Check overflow,
+        if (offset) { // Negative.
+            if (lastValue < value) {
+                NERROR("NCString.parse64BitInteger()", "Value too small to fit in a 64 bit integer: %s%s", NTCOLOR(HIGHLIGHT), string);
+                return 0;
+            }
+        } else {
+            if (lastValue > value) {
+                NERROR("NCString.parse64BitInteger()", "Value too large to fit in a 64 bit integer: %s%s", NTCOLOR(HIGHLIGHT), string);
+                return 0;
+            }
+        }
+        lastValue = value;
+    }
+
+    return value;
+}
+
 const struct NCString_Interface NCString = {
     .length = stringLength,
     .startsWith = startsWith,
@@ -135,5 +187,6 @@ const struct NCString_Interface NCString = {
     .equals = equals,
     .copy = copy,
     .clone = clone,
-    .parseInteger = parseInteger
+    .parseInteger = parseInteger,
+    .parse64BitInteger = parse64BitInteger
 };
