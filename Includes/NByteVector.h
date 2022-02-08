@@ -30,6 +30,7 @@ struct NByteVector_Interface {
     boolean (*set)(struct NByteVector* vector, uint32_t index, uint8_t value);
     uint32_t (*size)(struct NByteVector* vector);
     boolean (*resize)(struct NByteVector* vector, uint32_t newSize);
+    boolean (*ensureCapacity)(struct NByteVector* vector, uint32_t additionalCapacity);
 };
 
 extern const struct NByteVector_Interface NByteVector;

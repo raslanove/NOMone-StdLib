@@ -106,24 +106,27 @@ static boolean popBack32Bit(struct NByteVector* vector, int32_t *output) {
     return True;
 }
 
+static boolean ensureCapacity(struct NByteVector* vector, uint32_t additionalCapacity) {
+
+    // Maybe we needn't do anything,
+    uint32_t requiredCapacity = vector->size + additionalCapacity;
+    if (requiredCapacity <= vector->capacity) return True;
+
+    // Check if an expansion would do,
+    if (requiredCapacity <= (vector->capacity<<1u)) return expand(vector);
+
+    // Grow to the required size directly,
+    return grow(vector, requiredCapacity);
+}
+
 static boolean pushBackBulk(struct NByteVector* vector, void* data, uint32_t size) {
 
-    // Double the vector capacity if needed,
-    uint32_t newSize = vector->size + size;
-    if (newSize > vector->capacity) {
-
-        // Check if an expansion would do,
-        if (newSize <= (vector->capacity<<1u)) {
-            if (!expand(vector)) return False;
-        } else {
-            // Grow to the required size directly,
-            if (!grow(vector, newSize)) return False;
-        }
-    }
+    // Increase capacity if needed,
+    if (!ensureCapacity(vector, size)) return False;
 
     // Push the block,
     NSystemUtils.memcpy(&vector->objects[vector->size], data, size);
-    vector->size = newSize;
+    vector->size += size;
     return True;
 }
 
@@ -184,5 +187,6 @@ const struct NByteVector_Interface NByteVector = {
     .get = get,
     .set = set,
     .size = size,
-    .resize = resize
+    .resize = resize,
+    .ensureCapacity = ensureCapacity
 };
