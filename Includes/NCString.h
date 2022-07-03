@@ -10,6 +10,8 @@
 struct NCString_Interface {
     int32_t (*length)(const char* string);
     boolean (*startsWith)(const char* string, const char* value);
+    boolean (*endsWith)(const char* string, const char* value);
+    boolean (*contains)(const char* string, const char* value);
     int32_t (*lastIndexOf)(const char* string, const char* value); // Returns last occurrence index, -1 if not found.
     boolean (*equals)(const char* string, const char* value);
     char* (*copy)(char* destination, const char* source); // Returns destination.

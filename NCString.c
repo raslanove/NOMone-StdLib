@@ -26,6 +26,39 @@ static boolean startsWith(const char* string, const char* value) {
     return True;
 }
 
+static boolean endsWith(const char* string, const char* value) {
+    int32_t stringIndex = stringLength(string)-1;
+    int32_t  valueIndex = stringLength(value )-1;
+    if (valueIndex > stringIndex) return False;
+
+    while (valueIndex>=0) {
+        if (string[stringIndex] != value[valueIndex]) return False;
+        stringIndex--;
+        valueIndex--;
+    }
+
+    return True;
+}
+
+static boolean contains(const char* string, const char* value) {
+
+    int32_t matchIndex=0;
+    do {
+        int32_t stringIndex = matchIndex;
+        int32_t valueIndex=0;
+        char currentStringChar = string[stringIndex];
+        char  currentValueChar =  value[          0];
+        while (currentStringChar && currentValueChar) {
+            if (currentStringChar != currentValueChar) break;
+            currentStringChar = string[++stringIndex];
+            currentValueChar  =  value[++ valueIndex];
+        }
+        if (! currentValueChar) return  True;
+        if (!currentStringChar) return False;
+        matchIndex++;
+    } while(True);
+}
+
 // Returns last occurrence index, -1 if not found,
 static int32_t lastIndexOf(const char* string, const char* value) {
 
@@ -185,6 +218,8 @@ static int64_t parse64BitInteger(const char* string) {
 const struct NCString_Interface NCString = {
     .length = stringLength,
     .startsWith = startsWith,
+    .endsWith = endsWith,
+    .contains = contains,
     .lastIndexOf = lastIndexOf,
     .equals = equals,
     .copy = copy,
