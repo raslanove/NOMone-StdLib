@@ -130,7 +130,6 @@ void NMemoryProfiler_free(void* address, const char* id) {
     NSystemUtils.free(bundledData);
 }
 
-
 void NMemoryProfiler_logOnExitReport() {
 
     profilingEnabled = False;

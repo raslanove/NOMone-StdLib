@@ -55,7 +55,9 @@ struct NSystemUtils_Interface {
     void* (*malloc)(int32_t size);
     void (*free)(void* address);
     void* (*memset)(void* address, int value, int32_t length); // Returns address.
-    void* (*memcpy)(void* dest, const void* src, int32_t length); // Returns destination.
+    void* (*memcpy )(void* dest, const void* src, int32_t length); // Returns destination.
+    void* (*memmove)(void* dest, const void* src, int32_t length); // Returns destination.
+    int32_t (*memcmp)(const void* ptr1, const void* ptr2, int32_t length); // Returns 0 if equal, or a value indicating which is larger.
 
     // Log,
     void (*logI)(const char* tag, const char* format, ...);

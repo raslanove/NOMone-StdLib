@@ -3,6 +3,8 @@
 #include <NError.h>
 #include <NSystemUtils.h>
 
+#define EXTRA_CHECKS 1
+
 static int32_t stringLength(const char* string) {
     int32_t length=0;
     while (string[length]) length++;
@@ -27,12 +29,12 @@ static boolean startsWith(const char* string, const char* value) {
 // Returns last occurrence index, -1 if not found,
 static int32_t lastIndexOf(const char* string, const char* value) {
 
-#ifdef EXTRA_CHECKS
+    #if EXTRA_CHECKS
     if (!string || !value) {
         NERROR("NCString", "lastIndexOf(): string and value should be non-zero");
         return -1;
     }
-#endif
+    #endif
 
     int32_t  textLength = stringLength(string);
     int32_t valueLength = stringLength( value);

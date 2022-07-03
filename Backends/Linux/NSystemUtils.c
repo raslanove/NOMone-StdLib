@@ -48,6 +48,14 @@ static void* nMemcpy(void* dest, const void* src, int32_t length) {
     return memcpy(dest, src, length);
 }
 
+static void* nMemmove(void* dest, const void* src, int32_t length) {
+    return memmove(dest, src, length);
+}
+
+static int32_t nMemcmp(const void* ptr1, const void* ptr2, int32_t length) {
+    return memcmp(ptr1, ptr2, length);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Logging
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,6 +291,8 @@ const struct NSystemUtils_Interface NSystemUtils = {
     .free = nFree,
     .memset = nMemset,
     .memcpy = nMemcpy,
+    .memmove = nMemmove,
+    .memcmp = nMemcmp,
     .logI = nLogI,
     .logW = nLogW,
     .logE = nLogE,

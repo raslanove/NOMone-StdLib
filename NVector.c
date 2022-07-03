@@ -107,9 +107,9 @@ static boolean popBack(struct NVector* vector, void *outputObject) {
 }
 
 static void* get(struct NVector* vector, uint32_t index) {
-#if NVECTOR_BOUNDARY_CHECK
+    #if NVECTOR_BOUNDARY_CHECK
     if (index >= vector->objectsCount) return 0;
-#endif
+    #endif
 
     return (void *)(((intptr_t) vector->objects) + (index                    * vector->objectSize));
 }
@@ -117,6 +117,25 @@ static void* get(struct NVector* vector, uint32_t index) {
 static void* getLast(struct NVector* vector) {
     if (!vector->objectsCount) return 0;
     return (void *)(((intptr_t) vector->objects) + ((vector->objectsCount-1) * vector->objectSize));
+}
+
+static int32_t getFirstInstanceIndex(struct NVector* vector, const void* object) {
+    intptr_t currentLocation = (intptr_t) vector->objects;
+    for (int32_t i=0; i<vector->objectsCount; i++) {
+        if (!NSystemUtils.memcmp(object, (void*) currentLocation, vector->objectSize)) return i;
+        currentLocation += vector->objectSize;
+    }
+    return -1;
+}
+
+static void remove(struct NVector* vector, int32_t index) {
+    #if NVECTOR_BOUNDARY_CHECK
+    if (index < 0 | index >= vector->objectsCount) return;
+    #endif
+
+    vector->objectsCount--;
+    intptr_t dest = ((intptr_t) vector->objects) + (index*vector->objectSize);
+    NSystemUtils.memmove((void*) dest, (void*)(dest + vector->objectSize), (vector->objectsCount - index)*vector->objectSize);
 }
 
 static uint32_t size(struct NVector* vector) {
@@ -141,6 +160,8 @@ const struct NVector_Interface NVector = {
     .popBack = popBack,
     .get = get,
     .getLast = getLast,
+    .getFirstInstanceIndex = getFirstInstanceIndex,
+    .remove = remove,
     .size = size,
     .resize = resize
 };
