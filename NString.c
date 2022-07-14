@@ -1,5 +1,6 @@
 
 #include <NString.h>
+#include <NCString.h>
 #include <NError.h>
 #include <NSystemUtils.h>
 
@@ -396,6 +397,29 @@ static const char* get(struct NString* string) {
     return (const char*) string->string.objects;
 }
 
+static struct NString* trimEnd(struct NString* string, const char* symbolsToBeRemoved) {
+    int32_t currentIndex = string->string.size-2;
+    if ((!symbolsToBeRemoved[0]) || (currentIndex<0)) return string;
+
+    int32_t symbolsCount = NCString.length(symbolsToBeRemoved);
+    boolean trimming = True;
+    for (; trimming && (currentIndex>=0); currentIndex--) {
+        trimming = False;
+        for (int32_t i=0; i<symbolsCount; i++) {
+            if (symbolsToBeRemoved[i] == (char) string->string.objects[currentIndex]) {
+                trimming = True;
+                break;
+            }
+        }
+    }
+
+    currentIndex+=2;
+    NByteVector.resize(&string->string, currentIndex+1);
+    string->string.objects[currentIndex] = 0;
+
+    return string;
+}
+
 static struct NString* create(const char* format, ...) {
     struct NString* newString = NMALLOC(sizeof(struct NString), "NString.create() newString");
     va_list vaList;
@@ -446,6 +470,7 @@ const struct NString_Interface NString = {
     .append = append,
     .set = set,
     .get = get,
+    .trimEnd = trimEnd,
     .create = create,
     .replace = replace,
     .length = length
