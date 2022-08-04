@@ -9,7 +9,9 @@
 #include <NTypes.h>
 
 #define NERROR_MAX_TAG_LENGTH 64
-#define NERROR_MAX_MESSAGE_LENGTH 256
+#ifndef NERROR_MAX_MESSAGE_LENGTH
+    #define NERROR_MAX_MESSAGE_LENGTH 1024
+#endif
 #define NERROR(tag, errorMessageFormat, ...) NError.pushAndPrintError(tag, errorMessageFormat, ##__VA_ARGS__)
 
 struct NError {
