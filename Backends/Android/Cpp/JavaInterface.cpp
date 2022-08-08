@@ -48,10 +48,9 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
 #else
     NSystem.initialize(0);
 #endif
+    NSystem.terminate();
 
     return JNI_VERSION_1_6;
 }
 
-extern "C" JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
-    NSystem.terminate();
-}
+extern "C" JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {}
