@@ -32,7 +32,7 @@ struct NVector_Interface {
     boolean (*popBack)(struct NVector* vector, void *outputObject);   // True if successful.
     void* (*get)(struct NVector* vector, uint32_t index);
     void* (*getLast)(struct NVector* vector);
-    int32_t (*getFirstInstanceIndex)(struct NVector* vector, const void* object);
+    int32_t (*getFirstInstanceIndex)(struct NVector* vector, const void* object); // -1 if not found.
     void (*remove)(struct NVector* vector, int32_t index);
     uint32_t (*size)(struct NVector* vector);
     boolean (*resize)(struct NVector* vector, uint32_t newSize);
