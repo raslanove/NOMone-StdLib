@@ -26,6 +26,23 @@ static struct NVector* create(uint32_t initialCapacity, uint32_t objectSize) {
     return initialize(newVector, initialCapacity, objectSize);
 }
 
+static struct NVector* initializeFrom(struct NVector* outputVector, struct NVector* vectorToCopy) {
+
+    // Clone the vector,
+    *outputVector = *vectorToCopy;
+
+    //  Allocate separate storage (if needed),
+    if (vectorToCopy->capacity) {
+        int32_t vectorSizeBytes = vectorToCopy->capacity * vectorToCopy->objectSize;
+        outputVector->objects = NMALLOC(vectorSizeBytes, "NVector.initializeFrom() outputVector->objects");
+
+        // Copy data,
+        NSystemUtils.memcpy(outputVector->objects, vectorToCopy->objects, vectorSizeBytes);
+    }
+
+    return outputVector;
+}
+
 static void destroy(struct NVector* vector) {
     if (vector->objects) NFREE(vector->objects, "NVector.destroy() vector->objects");
     NSystemUtils.memset(vector, 0, sizeof(struct NVector));
@@ -151,6 +168,7 @@ static boolean resize(struct NVector* vector, uint32_t newSize) {
 const struct NVector_Interface NVector = {
     .initialize = initialize,
     .create = create,
+    .initializeFrom = initializeFrom,
     .destroy = destroy,
     .destroyAndFree = destroyAndFree,
     .clear = clear,

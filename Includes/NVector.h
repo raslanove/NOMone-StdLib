@@ -23,6 +23,7 @@ struct NVector {
 struct NVector_Interface {
     struct NVector* (*initialize)(struct NVector* outputVector, uint32_t initialCapacity, uint32_t objectSize);
     struct NVector* (*create)(uint32_t initialCapacity, uint32_t objectSize);
+    struct NVector* (*initializeFrom)(struct NVector* outputVector, struct NVector* vectorToCopy);
     void (*destroy)(struct NVector* vector);
     void (*destroyAndFree)(struct NVector* vector);
     struct NVector* (*clear)(struct NVector* vector);
