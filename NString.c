@@ -397,26 +397,64 @@ static const char* get(struct NString* string) {
     return (const char*) string->string.objects;
 }
 
+static struct NString* trimFront(struct NString* string, const char* symbolsToBeRemoved) {
+
+    int32_t currentIndex=0;
+    int32_t symbolsCount = NCString.length(symbolsToBeRemoved);
+    char* cString = (char*) string->string.objects;
+    for (; cString[currentIndex]; currentIndex++) {
+        boolean trimming = False;
+        for (int32_t i=0; i<symbolsCount; i++) {
+            if (symbolsToBeRemoved[i] == cString[currentIndex]) {
+                trimming = True;
+                break;
+            }
+        }
+        if (!trimming) break;
+    }
+
+    // If nothing trimmed, return,
+    if (!currentIndex) return string;
+
+    // Shift the string backwards to fill the gap,
+    int32_t i=0;
+    while(cString[currentIndex]) cString[i++] = cString[currentIndex++];
+
+    // Adjust the string size,
+    cString[i] = 0;
+    NByteVector.resize(&string->string, i+1);
+
+    return string;
+}
+
 static struct NString* trimEnd(struct NString* string, const char* symbolsToBeRemoved) {
     int32_t currentIndex = string->string.size-2;
     if ((!symbolsToBeRemoved[0]) || (currentIndex<0)) return string;
 
     int32_t symbolsCount = NCString.length(symbolsToBeRemoved);
-    boolean trimming = True;
-    for (; trimming && (currentIndex>=0); currentIndex--) {
-        trimming = False;
+    char* cString = (char*) string->string.objects;
+    for (; currentIndex>=0; currentIndex--) {
+        boolean trimming = False;
         for (int32_t i=0; i<symbolsCount; i++) {
-            if (symbolsToBeRemoved[i] == (char) string->string.objects[currentIndex]) {
+            if (symbolsToBeRemoved[i] == cString[currentIndex]) {
                 trimming = True;
                 break;
             }
         }
+        if (!trimming) break;
     }
 
-    currentIndex+=2;
-    NByteVector.resize(&string->string, currentIndex+1);
+    // Adjust the string size,
+    currentIndex++;
     string->string.objects[currentIndex] = 0;
+    NByteVector.resize(&string->string, currentIndex+1);
 
+    return string;
+}
+
+static struct NString* trim(struct NString* string, const char* symbolsToBeRemoved) {
+    trimEnd  (string, symbolsToBeRemoved);
+    trimFront(string, symbolsToBeRemoved);
     return string;
 }
 
@@ -470,7 +508,9 @@ const struct NString_Interface NString = {
     .append = append,
     .set = set,
     .get = get,
+    .trimFront = trimFront,
     .trimEnd = trimEnd,
+    .trim = trim,
     .create = create,
     .replace = replace,
     .length = length

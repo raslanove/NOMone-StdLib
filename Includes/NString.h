@@ -18,10 +18,12 @@ struct NString_Interface {
     void (*destroyAndFree)(struct NString* string);
 
     struct NString* (*vAppend)(struct NString* outString, const char* format, va_list vaList);
-    struct NString* (*append)(struct NString* outString, const char* format, ...);
-    struct NString* (*set)(struct NString* outString, const char* format, ...);
+    struct NString* (* append)(struct NString* outString, const char* format, ...);
+    struct NString* (*    set)(struct NString* outString, const char* format, ...);
     const char* (*get)(struct NString* string);
-    struct NString* (*trimEnd)(struct NString* string, const char* symbolsToBeRemoved);
+    struct NString* (*trimFront)(struct NString* string, const char* symbolsToBeRemoved);
+    struct NString* (*trimEnd  )(struct NString* string, const char* symbolsToBeRemoved);
+    struct NString* (*trim     )(struct NString* string, const char* symbolsToBeRemoved);
     struct NString* (*create)(const char* format, ...);
     struct NString* (*replace)(const char* textToBeSearched, const char* textToBeRemoved, const char* textToBeInserted);
     int32_t (*length)(struct NString* string);
