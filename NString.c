@@ -496,6 +496,26 @@ static struct NString* replace(const char* textToBeSearched, const char* textToB
     return newString;
 }
 
+static struct NString* subString(struct NString* string, int32_t startIndex, int32_t endIndex) {
+
+    // Create a new string for the result,
+    struct NString* newString = NString.create("");
+    NByteVector.resize(&newString->string, 1 + endIndex - startIndex);
+
+    // Copy,
+    uint8_t* src  =    string->string.objects;
+    uint8_t* dest = newString->string.objects;
+    for (int32_t i=startIndex; i<endIndex; i++) {
+        *dest = src[i];
+        dest++;
+    }
+
+    // Terminate with a zero,
+    *dest = 0;
+
+    return newString;
+}
+
 static int32_t length(struct NString* string) {
     return string->string.size - 1;
 }
@@ -513,5 +533,6 @@ const struct NString_Interface NString = {
     .trim = trim,
     .create = create,
     .replace = replace,
+    .subString = subString,
     .length = length
 };

@@ -26,6 +26,7 @@ struct NString_Interface {
     struct NString* (*trim     )(struct NString* string, const char* symbolsToBeRemoved);
     struct NString* (*create)(const char* format, ...);
     struct NString* (*replace)(const char* textToBeSearched, const char* textToBeRemoved, const char* textToBeInserted);
+    struct NString* (*subString)(struct NString* string, int32_t startIndex, int32_t endIndex);
     int32_t (*length)(struct NString* string);
 };
 
