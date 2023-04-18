@@ -483,11 +483,14 @@ static struct NString* replace(const char* textToBeSearched, const char* textToB
             matchIndex++;
         }
 
-        // Check if a match occurred,
+        // Either a match or a mismatch took place,
         if (!textToBeRemoved[matchIndex]) {
+            // A match took place, append the text to be inserted,
             NString.append(newString, "%s", textToBeInserted);
             searchIndex += matchIndex;
         } else {
+            // A mismatch took place, add the current character only and advance
+            // the search index by 1,
             NString.append(newString, "%c", currentChar);
             searchIndex++;
         }
