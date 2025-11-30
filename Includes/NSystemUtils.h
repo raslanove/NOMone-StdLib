@@ -85,13 +85,13 @@ extern const struct NSystemUtils_Interface NSystemUtils;
 
 struct NDirectoryEntryType {
     const int32_t UNKNOWN;
-    const int32_t NAMED_PIPE;
-    const int32_t CHARACTER_DEVICE;
+    const int32_t REGULAR_FILE;
     const int32_t DIRECTORY;
     const int32_t BLOCK_DEVICE;
-    const int32_t REGULAR_FILE;
-    const int32_t SYMBOLIC_LINK;
+    const int32_t NAMED_PIPE;
     const int32_t UNIX_DOMAIN_SOCKET;
+    const int32_t CHARACTER_DEVICE;
+    const int32_t SYMBOLIC_LINK;
 };
 extern const struct NDirectoryEntryType NDirectoryEntryType;
 
